@@ -1,0 +1,112 @@
+version: "3.9"
+
+# ============================================================
+#  PROCTO — Docker Compose (Development)
+#  Run:  docker-compose up --build
+#  Stop: docker-compose down
+#  Nuke: docker-compose down -v   (wipes DB volumes too)
+# ============================================================
+
+services:
+
+  # ──────────────────────────────────────────────
+  #  DATABASE  (PostgreSQL 15)
+  # ──────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: procto_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432" # host:container  — connect with TablePlus/DBeaver on localhost:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # persist DB across restarts
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql # optional seed script
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  #  CACHE / QUEUE  (Redis 7)
+  # ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: procto_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    ports:
+      - "6379:6379" # connect with RedisInsight on localhost:6379
+    volumes:
+      - redis_data:/data # persist queue jobs across restarts
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  #  BACKEND  (Node.js / Express API)
+  # ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development # uses the dev stage (with ts-node, hot reload)
+    container_name: procto_backend
+    restart: unless-stopped
+    env_file:
+      - .env # loads ALL variables from your .env file
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    ports:
+      - "4000:4000" # REST API  →  http://localhost:4000
+      - "4001:4001" # WebSocket →  ws://localhost:4001  (Socket.io)
+      - "5555:5555" # Prisma Studio → http://localhost:5555
+    volumes:
+      - ./backend:/app # live reload: your local code mirrors into the container
+      - /app/node_modules # anonymous volume keeps container's node_modules isolated
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev # uses ts-node-dev / nodemon for hot reload
+
+  # ──────────────────────────────────────────────
+  #  FRONTEND  (React + Vite)
+  # ──────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: procto_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+      VITE_WS_URL: ws://localhost:4001
+    ports:
+      - "5173:5173" # Vite dev server  →  http://localhost:5173
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0 # --host exposes Vite outside the container
+
+# ──────────────────────────────────────────────
+#  NAMED VOLUMES  (persist data between runs)
+# ──────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

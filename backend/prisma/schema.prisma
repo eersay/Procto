@@ -1,0 +1,304 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  FACULTY
+  ADMIN
+}
+
+enum ExamStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum SessionStatus {
+  PENDING
+  ACTIVE
+  SUBMITTED
+  TERMINATED
+  INVALIDATED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  MULTIPLE_SELECT
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  FILL_BLANK
+  NUMERICAL
+  CODE
+}
+
+enum EventType {
+  FACE_NOT_DETECTED
+  MULTIPLE_FACES
+  LOOKING_AWAY
+  TAB_SWITCH
+  NOISE_DETECTED
+  SCREEN_EXIT
+  COPY_PASTE
+  RIGHT_CLICK
+}
+
+enum EventSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  passwordHash      String?
+  role              UserRole
+  firstName         String
+  lastName          String
+  profilePhotoUrl   String?
+  mfaSecret         String?
+  isVerified        Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
+  coursesFaculty    Course[]       @relation("FacultyCourses")
+  enrollments       Enrollment[]
+  examSessions      ExamSession[]
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Course {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  name        String
+  description String?
+  facultyId   String
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relations
+  faculty     User         @relation("FacultyCourses", fields: [facultyId], references: [id])
+  enrollments Enrollment[]
+  exams       Exam[]
+  questions   Question[]
+
+  @@index([facultyId])
+  @@index([code])
+}
+
+model Enrollment {
+  id         String    @id @default(uuid())
+  courseId   String
+  studentId  String
+  enrolledAt DateTime  @default(now())
+  droppedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  course  Course @relation(fields: [courseId], references: [id])
+  student User   @relation(fields: [studentId], references: [id])
+
+  @@unique([courseId, studentId])
+  @@index([studentId])
+  @@index([courseId])
+}
+
+model Exam {
+  id               String     @id @default(uuid())
+  courseId         String
+  title            String
+  instructions     String?
+  durationMinutes  Int
+  startAt          DateTime
+  endAt            DateTime
+  proctoringLevel  String     @default("STANDARD")
+  status           ExamStatus @default(DRAFT)
+  isPublished      Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
+
+  // Relations
+  course          Course          @relation(fields: [courseId], references: [id])
+  examQuestions   ExamQuestion[]
+  examSessions    ExamSession[]
+  examRules       ExamRules?
+
+  @@index([courseId])
+  @@index([status])
+  @@index([startAt])
+}
+
+model ExamRules {
+  id                    String  @id @default(uuid())
+  examId                String  @unique
+  shuffleQuestions      Boolean @default(true)
+  shuffleChoices        Boolean @default(true)
+  maxAttempts           Int     @default(1)
+  negativeMarkingFactor Float   @default(0)
+  passThreshold         Float   @default(60)
+  allowCalculator       Boolean @default(false)
+  allowFormulaSheet     Boolean @default(false)
+
+  // Relations
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id         String       @id @default(uuid())
+  courseId   String
+  type       QuestionType
+  content    Json
+  points     Float
+  difficulty String?
+  topicTags  String[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  deletedAt  DateTime?
+
+  // Relations
+  course        Course         @relation(fields: [courseId], references: [id])
+  examQuestions ExamQuestion[]
+  answers       Answer[]
+
+  @@index([courseId])
+  @@index([type])
+}
+
+model ExamQuestion {
+  id         String @id @default(uuid())
+  examId     String
+  questionId String
+  orderIndex Int
+
+  // Relations
+  exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([examId, questionId])
+  @@index([examId])
+}
+
+model ExamSession {
+  id          String        @id @default(uuid())
+  examId      String
+  studentId   String
+  startedAt   DateTime      @default(now())
+  submittedAt DateTime?
+  status      SessionStatus @default(PENDING)
+  ipAddress   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  exam             Exam              @relation(fields: [examId], references: [id])
+  student          User              @relation(fields: [studentId], references: [id])
+  answers          Answer[]
+  suspiciousEvents SuspiciousEvent[]
+  result           Result?
+
+  @@unique([examId, studentId])
+  @@index([examId])
+  @@index([studentId])
+  @@index([status])
+}
+
+model Answer {
+  id          String   @id @default(uuid())
+  sessionId   String
+  questionId  String
+  response    Json
+  autoScore   Float?
+  manualScore Float?
+  gradedBy    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  session  ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+}
+
+model SuspiciousEvent {
+  id            String        @id @default(uuid())
+  sessionId     String
+  type          EventType
+  severity      EventSeverity
+  screenshotUrl String?
+  timestamp     DateTime      @default(now())
+  dismissedBy   String?
+
+  // Relations
+  session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([severity])
+}
+
+model Result {
+  id          String   @id @default(uuid())
+  sessionId   String   @unique
+  totalScore  Float
+  percentage  Float
+  rank        Int?
+  percentile  Float?
+  passStatus  Boolean
+  finalizedAt DateTime @default(now())
+
+  // Relations
+  session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String
+  action       String
+  resourceType String
+  resourceId   String?
+  ipAddress    String?
+  timestamp    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([timestamp])
+}
