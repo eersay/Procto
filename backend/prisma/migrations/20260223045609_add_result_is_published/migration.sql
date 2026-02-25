@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Result" ADD COLUMN     "isPublished" BOOLEAN NOT NULL DEFAULT false,
+ALTER COLUMN "finalizedAt" DROP NOT NULL,
+ALTER COLUMN "finalizedAt" DROP DEFAULT;

@@ -45,6 +45,8 @@ enum EventType {
   MULTIPLE_FACES
   LOOKING_AWAY
   TAB_SWITCH
+  WINDOW_BLUR
+  WEBCAM_DENIED
   NOISE_DETECTED
   SCREEN_EXIT
   COPY_PASTE
@@ -61,6 +63,7 @@ model User {
   id                String   @id @default(uuid())
   email             String   @unique
   passwordHash      String?
+  googleId          String?  @unique
   role              UserRole
   firstName         String
   lastName          String
@@ -74,11 +77,12 @@ model User {
   deletedAt         DateTime?
 
   // Relations
-  coursesFaculty    Course[]       @relation("FacultyCourses")
+  coursesFaculty    Course[]        @relation("FacultyCourses")
   enrollments       Enrollment[]
   examSessions      ExamSession[]
   refreshTokens     RefreshToken[]
   auditLogs         AuditLog[]
+  announcements     Announcement[]  @relation("AuthoredAnnouncements")
 
   @@index([email])
   @@index([role])
@@ -96,10 +100,11 @@ model Course {
   deletedAt   DateTime?
 
   // Relations
-  faculty     User         @relation("FacultyCourses", fields: [facultyId], references: [id])
-  enrollments Enrollment[]
-  exams       Exam[]
-  questions   Question[]
+  faculty       User           @relation("FacultyCourses", fields: [facultyId], references: [id])
+  enrollments   Enrollment[]
+  exams         Exam[]
+  questions     Question[]
+  announcements Announcement[]
 
   @@index([facultyId])
   @@index([code])
@@ -120,6 +125,23 @@ model Enrollment {
 
   @@unique([courseId, studentId])
   @@index([studentId])
+  @@index([courseId])
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  courseId  String
+  authorId  String
+  title     String
+  body      String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author User   @relation("AuthoredAnnouncements", fields: [authorId], references: [id])
+
   @@index([courseId])
 }
 
@@ -217,7 +239,6 @@ model ExamSession {
   suspiciousEvents SuspiciousEvent[]
   result           Result?
 
-  @@unique([examId, studentId])
   @@index([examId])
   @@index([studentId])
   @@index([status])
@@ -266,7 +287,8 @@ model Result {
   rank        Int?
   percentile  Float?
   passStatus  Boolean
-  finalizedAt DateTime @default(now())
+  isPublished Boolean  @default(false)
+  finalizedAt DateTime?
 
   // Relations
   session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)

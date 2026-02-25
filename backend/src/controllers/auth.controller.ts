@@ -61,13 +61,13 @@ export const register = async (req: Request, res: Response) => {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: '15m' }
+      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h' }
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: '7d' }
+      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
     );
 
     // Store refresh token hash in database
@@ -112,8 +112,13 @@ export const login = async (req: Request, res: Response) => {
       where: { email: data.email },
     });
 
-    if (!user || !user.passwordHash) {
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Account was created via Google OAuth — no password set
+    if (!user.passwordHash) {
+      return res.status(401).json({ error: 'This account uses Google Sign-In. Please click "Continue with Google" to log in.' });
     }
 
     // Verify password
@@ -131,13 +136,13 @@ export const login = async (req: Request, res: Response) => {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: '15m' }
+      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h' }
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: '7d' }
+      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
     );
 
     // Store refresh token
@@ -204,30 +209,22 @@ export const logout = async (req: Request, res: Response) => {
 // REFRESH TOKEN
 export const refreshToken = async (req: Request, res: Response) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    // Accept refresh token from cookie (normal login) OR request body (OAuth login)
+    const token = req.cookies.refreshToken || req.body.refreshToken;
 
-    if (!refreshToken) {
+    if (!token) {
       return res.status(401).json({ error: 'Refresh token not found' });
     }
 
-    // Verify refresh token
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as {
-      userId: string;
-    };
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as { userId: string };
 
-    // Generate new access token
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
-    }
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    if (!user) return res.status(401).json({ error: 'User not found' });
 
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: '15m' }
+      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h' }
     );
 
     res.json({ accessToken });
@@ -236,3 +233,76 @@ export const refreshToken = async (req: Request, res: Response) => {
     res.status(401).json({ error: 'Invalid refresh token' });
   }
 };
+
+// GOOGLE OAuth CALLBACK — called by Passport after successful Google auth
+export const googleCallback = async (req: Request, res: Response) => {
+  try {
+    const user = req.user as any;
+    console.log('[google/callback] user from passport:', user?.id, user?.email, user?.role);
+    if (!user) {
+      console.error('[google/callback] no user — redirecting to login');
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth`);
+    }
+
+    const accessToken = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_ACCESS_SECRET!,
+      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h' }
+    );
+    console.log('[google/callback] accessToken generated, length:', accessToken.length);
+
+    const refreshTokenValue = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_REFRESH_SECRET!,
+      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+    );
+
+    const refreshTokenHash = await bcrypt.hash(refreshTokenValue, 10);
+    await prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        tokenHash: refreshTokenHash,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+
+    const dest = user.role === 'FACULTY' ? '/faculty' : '/student';
+    const userJson = encodeURIComponent(JSON.stringify({
+      id: user.id, email: user.email, firstName: user.firstName,
+      lastName: user.lastName, role: user.role,
+    }));
+
+    const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?token=${accessToken}&refresh=${refreshTokenValue}&user=${userJson}&next=${encodeURIComponent(dest)}`;
+    console.log('[google/callback] redirecting to:', redirectUrl.slice(0, 80) + '...');
+    res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('[google/callback] ERROR:', error);
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth`);
+  }
+};
+
+// GET ME — verify token and return current user
+export const getMe = async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'No token' });
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as { userId: string };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true },
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user });
+  } catch {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+
+
+
+

@@ -8,6 +8,9 @@ import courseRoutes from './routes/course.routes';
 import questionRoutes from './routes/question.routes';
 import examRoutes from './routes/exam.routes';
 import examSessionRoutes from './routes/examSession.routes';
+import proctorRoutes from './routes/proctor.routes';
+import resultRoutes from './routes/result.routes';
+import passport from './utils/passport';
 
 dotenv.config();
 
@@ -16,12 +19,13 @@ const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(helmet());
-app.use(cors({ 
+app.use(cors({
   origin: process.env.CORS_ORIGINS?.split(','),
   credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
 
 // Health check
 app.get('/health', (req, res) => {
@@ -34,6 +38,8 @@ app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/questions', questionRoutes);
 app.use('/api/v1/exams', examRoutes);
 app.use('/api/v1/exam-sessions', examSessionRoutes);
+app.use('/api/v1/proctor', proctorRoutes);
+app.use('/api/v1/results', resultRoutes);
 
 // 404 handler
 app.use((req, res) => {

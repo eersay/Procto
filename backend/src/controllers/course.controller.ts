@@ -25,7 +25,7 @@ export const createCourse = async (req: AuthRequest, res: Response) => {
     let courseCode: string;
     let isUnique = false;
     let attempts = 0;
-    
+
     while (!isUnique && attempts < 10) {
       courseCode = generateCourseCode();
       const existing = await prisma.course.findUnique({
@@ -96,7 +96,7 @@ export const getCourses = async (req: AuthRequest, res: Response) => {
       });
     } else {
       const enrollments = await prisma.enrollment.findMany({
-        where: { 
+        where: {
           studentId: userId,
           droppedAt: null,
         },
@@ -249,13 +249,13 @@ export const enrollStudent = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const studentId = req.user!.userId;
 
-    const course = await prisma.course.findUnique({ 
+    const course = await prisma.course.findUnique({
       where: { id },
       include: {
         faculty: { select: { firstName: true, lastName: true } },
       },
     });
-    
+
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
@@ -386,3 +386,276 @@ export const unenrollStudent = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+// ─── NEW CLASSROOM ENDPOINTS ──────────────────────────────────────────────────
+
+// GET RICH COURSE DETAIL (role-aware)
+export const getCourseDetail = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+    const role = req.user!.role;
+
+    const course = await prisma.course.findUnique({
+      where: { id, deletedAt: null },
+      include: {
+        faculty: { select: { id: true, firstName: true, lastName: true, email: true } },
+        _count: { select: { enrollments: true, exams: true } },
+      },
+    });
+
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    // Verify access
+    if (role === 'STUDENT') {
+      const enrollment = await prisma.enrollment.findFirst({
+        where: { courseId: id, studentId: userId, droppedAt: null },
+      });
+      if (!enrollment) return res.status(403).json({ error: 'Not enrolled' });
+    } else if (role === 'FACULTY' && course.facultyId !== userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Announcements (latest 20)
+    const announcements = await prisma.announcement.findMany({
+      where: { courseId: id },
+      include: { author: { select: { firstName: true, lastName: true } } },
+      orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+      take: 20,
+    });
+
+    // Exams
+    const now = new Date();
+    const exams = await prisma.exam.findMany({
+      where: { courseId: id, deletedAt: null },
+      include: { _count: { select: { examQuestions: true } } },
+      orderBy: { startAt: 'asc' },
+    });
+
+    // Faculty-only data
+    let roster = null;
+    let performance = null;
+
+    if (role === 'FACULTY' || role === 'ADMIN') {
+      roster = await prisma.enrollment.findMany({
+        where: { courseId: id, droppedAt: null },
+        include: {
+          student: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+        orderBy: { enrolledAt: 'desc' },
+      });
+    }
+
+    // Student-only data: my grades in this course
+    let myGrades = null;
+    if (role === 'STUDENT') {
+      const sessions = await prisma.examSession.findMany({
+        where: {
+          studentId: userId,
+          status: { in: ['SUBMITTED', 'INVALIDATED'] },
+          exam: { courseId: id },
+        },
+        include: {
+          exam: { select: { id: true, title: true } },
+          result: true,
+        },
+        orderBy: { submittedAt: 'desc' },
+      });
+      myGrades = sessions;
+    }
+
+    res.json({ course, announcements, exams, roster, myGrades });
+  } catch (error) {
+    console.error('Get course detail error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// CREATE ANNOUNCEMENT (Faculty only)
+const announcementSchema = z.object({
+  title: z.string().min(1),
+  body: z.string().min(1),
+  isPinned: z.boolean().default(false),
+});
+
+export const createAnnouncement = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const facultyId = req.user!.userId;
+    const data = announcementSchema.parse(req.body);
+
+    const course = await prisma.course.findUnique({
+      where: { id, facultyId: req.user!.role === 'FACULTY' ? facultyId : undefined, deletedAt: null },
+    });
+    if (!course) return res.status(404).json({ error: 'Course not found or not authorized' });
+
+    const announcement = await prisma.announcement.create({
+      data: {
+        courseId: id,
+        authorId: facultyId,
+        title: data.title,
+        body: data.body,
+        isPinned: data.isPinned,
+      },
+      include: { author: { select: { firstName: true, lastName: true } } },
+    });
+
+    res.status(201).json({ announcement });
+  } catch (error) {
+    if (error instanceof z.ZodError)
+      return res.status(400).json({ error: 'Validation failed', details: error.errors });
+    console.error('Create announcement error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// LIST ANNOUNCEMENTS
+export const getAnnouncements = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+    const role = req.user!.role;
+
+    // Access check
+    if (role === 'STUDENT') {
+      const enrollment = await prisma.enrollment.findFirst({
+        where: { courseId: id, studentId: userId, droppedAt: null },
+      });
+      if (!enrollment) return res.status(403).json({ error: 'Not enrolled' });
+    }
+
+    const announcements = await prisma.announcement.findMany({
+      where: { courseId: id },
+      include: { author: { select: { firstName: true, lastName: true } } },
+      orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    res.json({ announcements });
+  } catch (error) {
+    console.error('Get announcements error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// DELETE ANNOUNCEMENT (Faculty only)
+export const deleteAnnouncement = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id, announcementId } = req.params;
+    const facultyId = req.user!.userId;
+
+    const announcement = await prisma.announcement.findUnique({
+      where: { id: announcementId },
+      include: { course: true },
+    });
+
+    if (!announcement || announcement.courseId !== id)
+      return res.status(404).json({ error: 'Announcement not found' });
+
+    if (req.user!.role === 'FACULTY' && announcement.course.facultyId !== facultyId)
+      return res.status(403).json({ error: 'Not authorized' });
+
+    await prisma.announcement.delete({ where: { id: announcementId } });
+    res.json({ message: 'Announcement deleted' });
+  } catch (error) {
+    console.error('Delete announcement error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// STUDENT PERFORMANCE TABLE (Faculty only)
+export const getStudentPerformance = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const facultyId = req.user!.userId;
+
+    const course = await prisma.course.findUnique({
+      where: { id, deletedAt: null },
+      include: {
+        faculty: { select: { id: true } },
+        exams: {
+          where: { deletedAt: null },
+          select: { id: true, title: true },
+          orderBy: { startAt: 'asc' },
+        },
+      },
+    });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    if (req.user!.role === 'FACULTY' && course.faculty.id !== facultyId)
+      return res.status(403).json({ error: 'Not authorized' });
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId: id, droppedAt: null },
+      include: {
+        student: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+
+    const examIds = course.exams.map((e) => e.id);
+
+    const sessions = await prisma.examSession.findMany({
+      where: {
+        examId: { in: examIds },
+        status: { in: ['SUBMITTED', 'INVALIDATED'] },
+      },
+      include: { result: true },
+    });
+
+    // Build matrix: student × exam
+    const matrix = enrollments.map((enrollment) => {
+      const studentId = enrollment.student.id;
+      const examScores = course.exams.map((exam) => {
+        const s = sessions.find(
+          (sess) => sess.studentId === studentId && sess.examId === exam.id
+        );
+        return {
+          examId: exam.id,
+          examTitle: exam.title,
+          percentage: s?.result?.percentage ?? null,
+          passStatus: s?.result?.passStatus ?? null,
+          submitted: !!s,
+        };
+      });
+
+      const submitted = examScores.filter((e) => e.submitted);
+      const avgScore =
+        submitted.length > 0
+          ? submitted.reduce((sum, e) => sum + (e.percentage || 0), 0) / submitted.length
+          : null;
+
+      return {
+        student: enrollment.student,
+        scores: examScores,
+        avgScore: avgScore !== null ? Math.round(avgScore * 10) / 10 : null,
+        examsSubmitted: submitted.length,
+        examsTotal: course.exams.length,
+      };
+    });
+
+    res.json({ exams: course.exams, students: matrix });
+  } catch (error) {
+    console.error('Student performance error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// DROP COURSE (Student self-unenroll)
+export const dropCourse = async (req: AuthRequest, res: Response) => {
+  try {
+    const { courseId } = req.body;
+    const studentId = req.user!.userId;
+
+    const result = await prisma.enrollment.updateMany({
+      where: { courseId, studentId, droppedAt: null },
+      data: { droppedAt: new Date() },
+    });
+
+    if (result.count === 0)
+      return res.status(404).json({ error: 'Enrollment not found' });
+
+    res.json({ message: 'Successfully dropped course' });
+  } catch (error) {
+    console.error('Drop course error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
