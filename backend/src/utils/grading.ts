@@ -47,7 +47,7 @@ export async function gradeAnswer(
       return { autoScore: 0, needsManualGrading: true };
 
     case 'NUMERICAL':
-      return gradeNumerical(studentResponse, content.correctAnswer, points);
+      return gradeNumerical(studentResponse, content.correctAnswer, points, content.tolerance);
 
     default:
       return { autoScore: 0, needsManualGrading: false };
@@ -71,21 +71,14 @@ function gradeMultipleSelect(
     return { autoScore: 0, needsManualGrading: false };
   }
 
-  // Must select ALL correct answers and NO wrong answers
-  const studentSet = new Set(studentAnswers);
+  // Partial credit: +1 for each correct selection, -1 for each wrong selection, floored at 0
   const correctSet = new Set(correctAnswers);
+  const correctlySelected = studentAnswers.filter(a => correctSet.has(a)).length;
+  const wronglySelected = studentAnswers.filter(a => !correctSet.has(a)).length;
+  const ratio = Math.max(0, (correctlySelected - wronglySelected) / correctAnswers.length);
+  const autoScore = Math.round(ratio * points * 100) / 100; // round to 2dp
 
-  if (studentSet.size !== correctSet.size) {
-    return { autoScore: 0, needsManualGrading: false };
-  }
-
-  for (const answer of correctAnswers) {
-    if (!studentSet.has(answer)) {
-      return { autoScore: 0, needsManualGrading: false };
-    }
-  }
-
-  return { autoScore: points, needsManualGrading: false };
+  return { autoScore, needsManualGrading: false };
 }
 
 function gradeTrueFalse(
@@ -110,8 +103,15 @@ function gradeShortAnswer(
     return { autoScore: 0, needsManualGrading: false };
   }
 
-  let student = studentAnswer.trim();
-  let correct = correctAnswer.trim();
+  // Normalize: collapse whitespace, strip punctuation for fuzzy matching
+  const normalize = (s: string) =>
+    s.trim()
+      .replace(/[^\w\s]/g, '')   // remove punctuation (apostrophes, commas, etc.)
+      .replace(/\s+/g, ' ')       // collapse multiple spaces
+      .trim();
+
+  let student = normalize(studentAnswer);
+  let correct = normalize(correctAnswer);
 
   if (caseInsensitive) {
     student = student.toLowerCase();
@@ -128,9 +128,10 @@ function gradeShortAnswer(
 function gradeNumerical(
   studentAnswer: number,
   correctAnswer: number,
-  points: number
+  points: number,
+  tolerance: number = 0.01 // faculty-configurable per question, defaults to 0.01
 ): GradingResult {
-  const isCorrect = Math.abs(studentAnswer - correctAnswer) < 0.01; // Allow small floating point errors
+  const isCorrect = Math.abs(studentAnswer - correctAnswer) <= tolerance;
   return {
     autoScore: isCorrect ? points : 0,
     needsManualGrading: false,
@@ -217,13 +218,17 @@ export async function gradeExamSession(sessionId: string) {
   const passThreshold = examRules?.passThreshold || 60;
   const passStatus = percentage >= passThreshold;
 
-  // Create or update result
+  // Create or update result.
+  // Auto-publish if all questions were auto-gradable (no ESSAY / CODE).
+  const isPublished = !needsManualGrading;
+
   const result = await prisma.result.upsert({
     where: { sessionId },
     update: {
       totalScore,
       percentage,
       passStatus,
+      isPublished,
       finalizedAt: needsManualGrading ? null : new Date(),
     },
     create: {
@@ -231,6 +236,7 @@ export async function gradeExamSession(sessionId: string) {
       totalScore,
       percentage,
       passStatus,
+      isPublished,
       finalizedAt: needsManualGrading ? null : new Date(),
     },
   });

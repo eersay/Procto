@@ -10,6 +10,7 @@ import examRoutes from './routes/exam.routes';
 import examSessionRoutes from './routes/examSession.routes';
 import proctorRoutes from './routes/proctor.routes';
 import resultRoutes from './routes/result.routes';
+import notificationRoutes from './routes/notification.routes';
 import passport from './utils/passport';
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.use('/api/v1/exams', examRoutes);
 app.use('/api/v1/exam-sessions', examSessionRoutes);
 app.use('/api/v1/proctor', proctorRoutes);
 app.use('/api/v1/results', resultRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {

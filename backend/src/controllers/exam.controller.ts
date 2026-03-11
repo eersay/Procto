@@ -181,7 +181,7 @@ export const getExamById = async (req: AuthRequest, res: Response) => {
           orderBy: { orderIndex: 'asc' },
         },
         _count: {
-          select: { examSessions: true },
+          select: { examQuestions: true, examSessions: true },
         },
       },
     });

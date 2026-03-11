@@ -14,7 +14,8 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const accent = isStudent ? 'emerald' : 'violet';
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,14 +37,27 @@ export default function LoginPage() {
         setPassword('');
       } else {
         const res = await api.post('/auth/login', { email, password });
+        const returnedRole: string = res.data.user.role;
+        const expectedRole = isStudent ? 'STUDENT' : 'FACULTY';
+
+        // Role mismatch — don't allow cross-portal login
+        if (returnedRole !== expectedRole) {
+          const correctPortal = returnedRole === 'STUDENT' ? 'Student' : 'Faculty';
+          setError(
+            `This account is registered as ${returnedRole}. Please use the "${correctPortal}" tab to sign in.`
+          );
+          setLoading(false);
+          return;
+        }
+
         localStorage.setItem('accessToken', res.data.accessToken);
         localStorage.setItem('user', JSON.stringify(res.data.user));
 
-        const role = res.data.user.role;
-        if (role === 'STUDENT') navigate('/student');
-        else if (role === 'FACULTY') navigate('/faculty');
+        if (returnedRole === 'STUDENT') navigate('/student');
+        else if (returnedRole === 'FACULTY') navigate('/faculty');
         else navigate('/admin');
       }
+
     } catch (err: any) {
       setError(err.response?.data?.error || 'Something went wrong');
     } finally {

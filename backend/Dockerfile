@@ -22,7 +22,7 @@ RUN npx prisma generate
 COPY . .
 EXPOSE 4000 4001
 # ts-node-dev: recompiles + restarts on file change
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npx prisma generate && npm run dev"]
 
 
 # ── Builder Stage (compile TypeScript → JavaScript) ──────────

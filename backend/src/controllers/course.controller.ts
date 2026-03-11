@@ -500,7 +500,27 @@ export const createAnnouncement = async (req: AuthRequest, res: Response) => {
       include: { author: { select: { firstName: true, lastName: true } } },
     });
 
+    // Fan out notifications to all enrolled students
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId: id, droppedAt: null },
+      select: { studentId: true },
+    });
+
+    if (enrollments.length > 0) {
+      await prisma.notification.createMany({
+        data: enrollments.map(e => ({
+          userId: e.studentId,
+          type: 'ANNOUNCEMENT',
+          title: `📢 ${course.name}: ${data.title}`,
+          body: data.body.slice(0, 200),
+          referenceId: announcement.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
     res.status(201).json({ announcement });
+
   } catch (error) {
     if (error instanceof z.ZodError)
       return res.status(400).json({ error: 'Validation failed', details: error.errors });
