@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
+import { toCsv, downloadCsv, safeFilename } from '../lib/exportCsv';
 
 interface ActiveSession {
   id: string; startedAt: string; status: string; timeElapsed: number; timeRemaining: number;
@@ -74,6 +75,29 @@ export default function ProctorDashboardPage() {
       toast.success('Session invalidated successfully');
       setShowDetailsModal(false); fetchActiveSessions();
     } catch { toast.error('Failed to invalidate session'); }
+  };
+
+  const exportViolations = (session: SessionDetails) => {
+    if (!session.suspiciousEvents.length) {
+      toast('No violations to export', { icon: 'ℹ️' });
+      return;
+    }
+    const rows = session.suspiciousEvents.map(ev => ({
+      Timestamp: new Date(ev.timestamp).toLocaleString(),
+      Type: ev.type.replace(/_/g, ' '),
+      Severity: ev.severity,
+      Student: `${session.student.firstName} ${session.student.lastName}`,
+      Email: session.student.email,
+      Exam: session.exam.title,
+    }));
+    const fname = safeFilename(
+      session.student.lastName,
+      session.student.firstName,
+      session.exam.title,
+      'violations'
+    );
+    downloadCsv(toCsv(rows), fname);
+    toast.success(`Exported ${rows.length} violation(s)`);
   };
 
   if (loading) return (
@@ -216,10 +240,10 @@ export default function ProctorDashboardPage() {
 
                   {/* Alert status */}
                   <div className={`rounded-xl border px-3 py-2.5 mb-4 ${highSev > 0
-                      ? 'border-red-500/30 bg-red-500/10'
-                      : totalEvents > 0
-                        ? 'border-yellow-500/30 bg-yellow-500/10'
-                        : 'border-emerald-500/30 bg-emerald-500/10'
+                    ? 'border-red-500/30 bg-red-500/10'
+                    : totalEvents > 0
+                      ? 'border-yellow-500/30 bg-yellow-500/10'
+                      : 'border-emerald-500/30 bg-emerald-500/10'
                     }`}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-semibold">
@@ -279,8 +303,16 @@ export default function ProctorDashboardPage() {
                 <p className="text-sm text-slate-400">{selectedSession.exam.title}</p>
                 <p className="text-xs text-slate-600 mt-0.5">{selectedSession.student.email}</p>
               </div>
-              <button onClick={() => setShowDetailsModal(false)}
-                className="text-slate-500 hover:text-white transition-colors text-2xl leading-none">×</button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => exportViolations(selectedSession)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 text-xs text-slate-400 hover:border-emerald-500/40 hover:text-emerald-300 transition-all"
+                >
+                  ⬇ Export Violations CSV
+                </button>
+                <button onClick={() => setShowDetailsModal(false)}
+                  className="text-slate-500 hover:text-white transition-colors text-2xl leading-none">×</button>
+              </div>
             </div>
 
             {/* Violation summary */}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
+import { toCsv, downloadCsv, safeFilename } from '../lib/exportCsv';
 
 interface Analytics {
     exam: { id: string; title: string; course: { name: string; code: string } };
@@ -44,12 +45,43 @@ export default function ClassAnalyticsPage() {
         }
     };
 
+    const exportSummary = () => {
+        if (!data) return;
+        const rows = [{
+            Exam: data.exam.title,
+            Course: `${data.exam.course.name} (${data.exam.course.code})`,
+            'Total Submissions': data.totalSubmissions,
+            'Graded': data.gradedCount,
+            'Avg Score (%)': data.avgScore,
+            'Highest (%)': data.highestScore,
+            'Lowest (%)': data.lowestScore,
+            'Pass Rate (%)': data.passRate,
+        }];
+        downloadCsv(toCsv(rows), safeFilename(data.exam.title, 'summary'));
+        toast.success('Summary exported');
+    };
+
+    const exportQuestions = () => {
+        if (!data) return;
+        const rows = data.questionStats.map(q => ({
+            'Q#': `Q${q.questionNumber}`,
+            Type: q.type.replace(/_/g, ' '),
+            'Max Points': q.maxPoints,
+            'Avg Score': q.avgScore,
+            Attempts: q.attemptCount,
+            'Full Credit Count': q.fullCreditCount,
+            'Full Credit (%)': q.fullCreditPct,
+        }));
+        downloadCsv(toCsv(rows), safeFilename(data.exam.title, 'question_breakdown'));
+        toast.success('Question breakdown exported');
+    };
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
                 <div className="text-center">
                     <div className="text-6xl mb-4 animate-pulse">📊</div>
-                    <p className="text-xl text-gray-600">Crunching the numbers...</p>
+                    <p className="text-slate-400 text-lg">Crunching the numbers…</p>
                 </div>
             </div>
         );
@@ -58,108 +90,174 @@ export default function ClassAnalyticsPage() {
     if (!data) return null;
 
     const maxBucketCount = Math.max(...data.scoreDistribution.map((b) => b.count), 1);
+    const passCount = Math.round((data.passRate / 100) * data.gradedCount);
+    const failCount = data.gradedCount - passCount;
+
+    const statCards = [
+        { label: 'Submissions', value: data.totalSubmissions, color: 'text-cyan-400', dot: 'bg-cyan-400', glow: 'shadow-cyan-500/20' },
+        { label: 'Graded', value: data.gradedCount, color: 'text-violet-400', dot: 'bg-violet-400', glow: 'shadow-violet-500/20' },
+        { label: 'Avg Score', value: `${data.avgScore}%`, color: 'text-yellow-400', dot: 'bg-yellow-400', glow: 'shadow-yellow-500/20' },
+        { label: 'Highest', value: `${data.highestScore}%`, color: 'text-emerald-400', dot: 'bg-emerald-400', glow: 'shadow-emerald-500/20' },
+        { label: 'Lowest', value: `${data.lowestScore}%`, color: 'text-red-400', dot: 'bg-red-400', glow: 'shadow-red-500/20' },
+        { label: 'Pass Rate', value: `${data.passRate}%`, color: data.passRate >= 60 ? 'text-emerald-400' : 'text-orange-400', dot: data.passRate >= 60 ? 'bg-emerald-400' : 'bg-orange-400', glow: 'shadow-emerald-500/20' },
+    ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Toaster position="top-right" />
+        <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+            <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
 
-            <nav className="bg-white shadow-sm border-b">
-                <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            {/* Ambient glows */}
+            <div className="pointer-events-none fixed inset-0 overflow-hidden">
+                <div className="absolute -left-40 top-0 h-80 w-80 rounded-full bg-violet-500/20 blur-3xl" />
+                <div className="absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl" />
+                <div className="absolute left-1/3 top-1/2 h-96 w-96 rounded-full bg-cyan-500/5 blur-3xl" />
+            </div>
+            <div className="pointer-events-none fixed inset-0 opacity-[0.025]"
+                style={{ backgroundImage: `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,0.04) 2px,rgba(255,255,255,0.04) 4px)` }} />
+
+            <div className="relative mx-auto w-full max-w-6xl px-6 py-8 sm:px-8 xl:py-12">
+
+                {/* Header */}
+                <header className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate('/grading')} className="text-gray-500 hover:text-gray-800 text-sm">
-                            ← Back to Grading
-                        </button>
-                        <div>
-                            <h1 className="text-xl font-bold text-gray-900">📊 Class Analytics</h1>
-                            <p className="text-sm text-gray-500">{data.exam.title} · {data.exam.course.code}</p>
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900/70 ring-1 ring-cyan-400/40 shadow-lg shadow-cyan-500/30">
+                            <span className="text-lg font-semibold tracking-tight text-cyan-300">P</span>
+                        </div>
+                        <div className="flex flex-col leading-tight">
+                            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Procto</span>
+                            <span className="text-xs text-slate-500">Class Analytics</span>
                         </div>
                     </div>
-                    <button
-                        onClick={() => navigate(`/grading`)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold transition"
-                    >
-                        Grade Students →
-                    </button>
-                </div>
-            </nav>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={exportSummary}
+                            className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 text-xs font-semibold text-slate-400 hover:border-cyan-500/40 hover:text-cyan-300 transition-all"
+                        >
+                            ⬇ Summary CSV
+                        </button>
+                        <button
+                            onClick={exportQuestions}
+                            className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 text-xs font-semibold text-slate-400 hover:border-violet-500/40 hover:text-violet-300 transition-all"
+                        >
+                            ⬇ Questions CSV
+                        </button>
+                        <button
+                            onClick={() => navigate('/grading')}
+                            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-cyan-300 transition-colors group"
+                        >
+                            <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                            Back
+                        </button>
+                    </div>
+                </header>
 
-            <main className="max-w-6xl mx-auto px-4 py-8">
-                {/* Stats cards */}
+                {/* Exam identity */}
+                <div className="mb-8">
+                    <h1 className="text-2xl font-bold text-slate-100">{data.exam.title}</h1>
+                    <p className="text-sm text-slate-500 mt-0.5">{data.exam.course.name} · <span className="font-mono text-slate-600">{data.exam.course.code}</span></p>
+                </div>
+
+                {/* Stat cards */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                    {[
-                        { label: 'Submissions', value: data.totalSubmissions, color: 'blue' },
-                        { label: 'Graded', value: data.gradedCount, color: 'indigo' },
-                        { label: 'Avg Score', value: `${data.avgScore}%`, color: 'yellow' },
-                        { label: 'Highest', value: `${data.highestScore}%`, color: 'green' },
-                        { label: 'Lowest', value: `${data.lowestScore}%`, color: 'red' },
-                        { label: 'Pass Rate', value: `${data.passRate}%`, color: 'emerald' },
-                    ].map((stat) => (
-                        <div key={stat.label} className="bg-white rounded-xl shadow p-4 text-center">
-                            <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
-                            <p className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
+                    {statCards.map((stat) => (
+                        <div key={stat.label} className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-4 text-center hover:border-slate-600/60 transition-all">
+                            <div className={`flex items-center justify-center gap-1.5 mb-2`}>
+                                <span className={`h-1.5 w-1.5 rounded-full ${stat.dot}`} />
+                                <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-slate-500">{stat.label}</p>
+                            </div>
+                            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                         </div>
                     ))}
                 </div>
 
+                {/* Charts row */}
                 <div className="grid lg:grid-cols-2 gap-6 mb-8">
+
                     {/* Score Distribution */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <h2 className="text-lg font-bold text-gray-800 mb-6">Score Distribution</h2>
+                    <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-6">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-5">Score Distribution</h2>
                         {data.gradedCount === 0 ? (
-                            <p className="text-center text-gray-400 py-8">No graded submissions yet</p>
+                            <p className="text-center text-slate-600 py-12">No graded submissions yet</p>
                         ) : (
                             <div className="space-y-3">
-                                {data.scoreDistribution.map((bucket) => (
-                                    <div key={bucket.range} className="flex items-center gap-3">
-                                        <span className="text-xs text-gray-500 w-16 text-right">{bucket.range}</span>
-                                        <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
-                                                style={{ width: `${(bucket.count / maxBucketCount) * 100}%` }}
-                                            >
-                                                {bucket.count > 0 && (
-                                                    <span className="text-white text-xs font-bold">{bucket.count}</span>
-                                                )}
+                                {data.scoreDistribution.map((bucket) => {
+                                    const pct = (bucket.count / maxBucketCount) * 100;
+                                    return (
+                                        <div key={bucket.range} className="flex items-center gap-3">
+                                            <span className="text-xs text-slate-500 w-14 text-right font-mono">{bucket.range}</span>
+                                            <div className="flex-1 bg-slate-800 rounded-full h-5 overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-violet-500 to-cyan-500 rounded-full transition-all duration-700 flex items-center justify-end pr-2"
+                                                    style={{ width: `${pct}%` }}
+                                                >
+                                                    {bucket.count > 0 && (
+                                                        <span className="text-white text-[0.6rem] font-bold">{bucket.count}</span>
+                                                    )}
+                                                </div>
                                             </div>
+                                            <span className="text-xs text-slate-600 w-5 text-right">{bucket.count}</span>
                                         </div>
-                                        <span className="text-xs text-gray-400 w-6">{bucket.count}</span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
 
                     {/* Pass / Fail donut */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <h2 className="text-lg font-bold text-gray-800 mb-6">Pass / Fail Split</h2>
+                    <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-6">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-5">Pass / Fail Split</h2>
                         {data.gradedCount === 0 ? (
-                            <p className="text-center text-gray-400 py-8">No graded submissions yet</p>
+                            <p className="text-center text-slate-600 py-12">No graded submissions yet</p>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full gap-6">
-                                <div className="relative w-40 h-40">
+                            <div className="flex flex-col items-center justify-center gap-6 py-2">
+                                {/* SVG donut */}
+                                <div className="relative w-36 h-36">
                                     <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                                        <circle cx="18" cy="18" r="15.915" fill="none" stroke="#fee2e2" strokeWidth="3.5" />
-                                        <circle
-                                            cx="18" cy="18" r="15.915" fill="none"
-                                            stroke="#22c55e" strokeWidth="3.5"
+                                        {/* Track */}
+                                        <circle cx="18" cy="18" r="15.915" fill="none" stroke="#1e293b" strokeWidth="4" />
+                                        {/* Fail arc (full background in red) */}
+                                        <circle cx="18" cy="18" r="15.915" fill="none"
+                                            stroke="#ef4444" strokeWidth="4"
+                                            strokeDasharray="100 0"
+                                            strokeLinecap="round"
+                                        />
+                                        {/* Pass arc (overlays fail) */}
+                                        <circle cx="18" cy="18" r="15.915" fill="none"
+                                            stroke="url(#passGrad)" strokeWidth="4"
                                             strokeDasharray={`${data.passRate} ${100 - data.passRate}`}
                                             strokeLinecap="round"
                                         />
+                                        <defs>
+                                            <linearGradient id="passGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stopColor="#34d399" />
+                                                <stop offset="100%" stopColor="#06b6d4" />
+                                            </linearGradient>
+                                        </defs>
                                     </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="text-2xl font-bold text-gray-800">{data.passRate}%</span>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span className="text-2xl font-bold text-slate-100">{data.passRate}%</span>
+                                        <span className="text-[0.6rem] text-slate-500 uppercase tracking-wider">pass rate</span>
                                     </div>
                                 </div>
                                 <div className="flex gap-8">
                                     <div className="text-center">
-                                        <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1" />
-                                        <p className="text-sm font-semibold">Passed</p>
-                                        <p className="text-gray-500 text-xs">{Math.round((data.passRate / 100) * data.gradedCount)} students</p>
+                                        <div className="flex items-center gap-1.5 justify-center mb-1">
+                                            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                                            <p className="text-xs font-semibold text-slate-300">Passed</p>
+                                        </div>
+                                        <p className="text-xl font-bold text-emerald-400">{passCount}</p>
+                                        <p className="text-[0.65rem] text-slate-600">students</p>
                                     </div>
+                                    <div className="w-px bg-slate-800" />
                                     <div className="text-center">
-                                        <div className="w-3 h-3 bg-red-200 rounded-full mx-auto mb-1" />
-                                        <p className="text-sm font-semibold">Failed</p>
-                                        <p className="text-gray-500 text-xs">{Math.round(((100 - data.passRate) / 100) * data.gradedCount)} students</p>
+                                        <div className="flex items-center gap-1.5 justify-center mb-1">
+                                            <span className="h-2 w-2 rounded-full bg-red-400" />
+                                            <p className="text-xs font-semibold text-slate-300">Failed</p>
+                                        </div>
+                                        <p className="text-xl font-bold text-red-400">{failCount}</p>
+                                        <p className="text-[0.65rem] text-slate-600">students</p>
                                     </div>
                                 </div>
                             </div>
@@ -168,64 +266,66 @@ export default function ClassAnalyticsPage() {
                 </div>
 
                 {/* Per-question table */}
-                <div className="bg-white rounded-xl shadow overflow-hidden">
-                    <div className="p-6 border-b">
-                        <h2 className="text-lg font-bold text-gray-800">Per-Question Performance</h2>
-                        <p className="text-sm text-gray-500 mt-1">How students performed on each question</p>
+                <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm overflow-hidden mb-16">
+                    <div className="px-6 py-5 border-b border-slate-800">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Per-Question Performance</h2>
+                        <p className="text-xs text-slate-600 mt-0.5">How students performed on each question</p>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
-                            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
-                                <tr>
-                                    <th className="px-6 py-3 text-left">Q#</th>
-                                    <th className="px-6 py-3 text-left">Type</th>
-                                    <th className="px-6 py-3 text-right">Max Pts</th>
-                                    <th className="px-6 py-3 text-right">Avg Score</th>
-                                    <th className="px-6 py-3 text-right">Attempts</th>
-                                    <th className="px-6 py-3 text-right">Full Credit</th>
-                                    <th className="px-6 py-3 text-left">Performance</th>
+                            <thead>
+                                <tr className="border-b border-slate-800">
+                                    {['Q#', 'Type', 'Max Pts', 'Avg Score', 'Attempts', 'Full Credit', 'Performance'].map((h, i) => (
+                                        <th key={h} className={`px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-widest text-slate-500 ${i >= 2 && i <= 5 ? 'text-right' : 'text-left'}`}>{h}</th>
+                                    ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y">
-                                {data.questionStats.map((q) => (
-                                    <tr key={q.questionNumber} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 font-bold text-gray-700">Q{q.questionNumber}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${q.type === 'ESSAY' || q.type === 'CODE'
-                                                    ? 'bg-orange-100 text-orange-700'
-                                                    : 'bg-blue-100 text-blue-700'
-                                                }`}>
-                                                {q.type.replace(/_/g, ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right text-gray-600">{q.maxPoints}</td>
-                                        <td className="px-6 py-4 text-right font-semibold">{q.avgScore}</td>
-                                        <td className="px-6 py-4 text-right text-gray-600">{q.attemptCount}</td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className={`font-semibold ${q.fullCreditPct >= 70 ? 'text-green-600' : q.fullCreditPct >= 40 ? 'text-yellow-600' : 'text-red-600'
-                                                }`}>
-                                                {q.fullCreditPct}%
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="w-32 bg-gray-200 rounded-full h-2">
-                                                <div
-                                                    className={`h-2 rounded-full ${q.fullCreditPct >= 70 ? 'bg-green-500' : q.fullCreditPct >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                                                        }`}
-                                                    style={{ width: `${q.fullCreditPct}%` }}
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                            <tbody>
+                                {data.questionStats.map((q, i) => {
+                                    const perfColor = q.fullCreditPct >= 70 ? 'bg-emerald-500' : q.fullCreditPct >= 40 ? 'bg-yellow-500' : 'bg-red-500';
+                                    const textColor = q.fullCreditPct >= 70 ? 'text-emerald-400' : q.fullCreditPct >= 40 ? 'text-yellow-400' : 'text-red-400';
+                                    const isManual = q.type === 'ESSAY' || q.type === 'CODE';
+                                    return (
+                                        <tr key={q.questionNumber}
+                                            className={`border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors ${i % 2 === 0 ? '' : 'bg-slate-900/30'}`}>
+                                            <td className="px-5 py-3.5 font-bold text-cyan-400 font-mono">Q{q.questionNumber}</td>
+                                            <td className="px-5 py-3.5">
+                                                <span className={`px-2 py-0.5 rounded-md text-[0.65rem] font-semibold border ${isManual
+                                                    ? 'border-orange-500/30 bg-orange-500/10 text-orange-400'
+                                                    : 'border-violet-500/30 bg-violet-500/10 text-violet-400'
+                                                    }`}>
+                                                    {q.type.replace(/_/g, ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-3.5 text-right text-slate-400 font-mono">{q.maxPoints}</td>
+                                            <td className="px-5 py-3.5 text-right font-bold text-slate-200">{q.avgScore}</td>
+                                            <td className="px-5 py-3.5 text-right text-slate-500">{q.attemptCount}</td>
+                                            <td className="px-5 py-3.5 text-right">
+                                                <span className={`font-bold ${textColor}`}>{q.fullCreditPct}%</span>
+                                            </td>
+                                            <td className="px-5 py-3.5">
+                                                <div className="w-28 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                                    <div className={`h-full rounded-full transition-all duration-500 ${perfColor}`}
+                                                        style={{ width: `${q.fullCreditPct}%` }} />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                         {data.questionStats.length === 0 && (
-                            <p className="text-center text-gray-400 py-8">No question data available</p>
+                            <p className="text-center text-slate-600 py-10">No question data available</p>
                         )}
                     </div>
                 </div>
-            </main>
-        </div>
+
+                {/* Footer */}
+                <footer className="flex items-center justify-between border-t border-slate-800/80 pt-4 text-[0.65rem] text-slate-700">
+                    <span>© {new Date().getFullYear()} Procto. Built for secure online exams.</span>
+                    <span className="hidden sm:inline">Designed for performance · React · TypeScript</span>
+                </footer>
+            </div>
+        </main>
     );
 }

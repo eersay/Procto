@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
+import { useFaceDetection, type FaceDetectionStatus } from '../lib/useFaceDetection';
 
 interface Question {
   id: string;
@@ -46,6 +47,12 @@ export default function TakeExamPage() {
   const submittedRef = useRef(false); // mirror of submitted for use inside closures
   const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
   const [suspiciousEvents, setSuspiciousEvents] = useState<string[]>([]);
+  const [faceStatus, setFaceStatus] = useState<FaceDetectionStatus>({
+    faceCount: 0,
+    modelLoaded: false,
+    lastViolation: null,
+  });
+  const [faceWarning, setFaceWarning] = useState<string | null>(null);
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -62,6 +69,34 @@ export default function TakeExamPage() {
   // Debounce WINDOW_BLUR so rapid OS-level focus changes don't flood events
   const lastBlurRef = useRef<number>(0);
 
+  // ── AI Face Detection ─────────────────────────────────────────────────────
+  // onViolation MUST be stable (useCallback) — TakeExamPage re-renders every
+  // second due to the timer countdown. An inline arrow would be recreated each
+  // render, making the inference useEffect restart its interval every second
+  // so it never actually fires.
+  const handleFaceViolation = useCallback((type: string, description: string) => {
+    logSuspiciousEvent(type, description);
+    const messages: Record<string, string> = {
+      FACE_NOT_DETECTED: '⚠️ No face detected! Please stay visible.',
+      MULTIPLE_FACES: '🚨 Multiple faces detected! Only you should be visible.',
+      LOOKING_AWAY: '👀 Please keep your eyes on the screen.',
+    };
+    const msg = messages[type] || '⚠️ Proctoring violation detected.';
+    setFaceWarning(msg);
+    toast.error(msg, { id: type, duration: 5000 });
+    setTimeout(() => setFaceWarning(null), 8000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // empty deps — logSuspiciousEvent uses a ref internally so it's stable
+
+  useFaceDetection({
+    videoRef,
+    enabled: !!sessionId && !!webcamStream && !submitted,
+    onViolation: handleFaceViolation,
+    onStatusChange: setFaceStatus,
+    intervalMs: 3000,
+    cooldownMs: 10_000,
+  });
+
   // ── EFFECT 1: stable event listener registration (separate from session init)
   // Using stable wrapper refs means React StrictMode double-cleanup never kills the listeners.
   useEffect(() => {
@@ -77,7 +112,7 @@ export default function TakeExamPage() {
     };
 
     // Auto-terminate via sendBeacon when page actually unloads (fire-and-forget)
-    const API_BASE = 'http://localhost:4000/api/v1';
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
     const onPageHide = () => {
       const sid = sessionIdRef.current;
       if (!sid || submittedRef.current) return;
@@ -162,6 +197,24 @@ export default function TakeExamPage() {
 
     return () => clearInterval(autoSave);
   }, [sessionId, answers]);
+
+  // ── KEY FIX: assign stream to video element AFTER React renders it ──────────
+  // Previously, srcObject was set inside requestWebcam() immediately after
+  // getUserMedia() resolved — but videoRef.current was still null at that
+  // point because React hadn't mounted the <video> element yet.
+  // This effect runs whenever webcamStream state changes, by which time React
+  // has already committed the <video> element to the DOM.
+  useEffect(() => {
+    if (!webcamStream || !videoRef.current) return;
+    const video = videoRef.current;
+    if (video.srcObject !== webcamStream) {
+      video.srcObject = webcamStream;
+      video.play().catch(() => {
+        // autoPlay policy may require user gesture — video will still
+        // play once user interacts (answer click, scroll, etc.)
+      });
+    }
+  }, [webcamStream]);
 
   // Start webcam capture every 30 seconds
   useEffect(() => {
@@ -524,18 +577,49 @@ export default function TakeExamPage() {
   const progress = ((currentQuestionIndex + 1) / exam.examQuestions.length) * 100;
   const answeredCount = Object.keys(answers).length;
 
+  // Face status helpers
+  const faceStatusDot = () => {
+    if (!faceStatus.modelLoaded) return { color: 'bg-gray-400', label: 'AI Loading…' };
+    if (faceStatus.faceCount === 0) return { color: 'bg-red-500', label: 'No Face' };
+    if (faceStatus.faceCount > 1) return { color: 'bg-orange-500', label: `${faceStatus.faceCount} Faces` };
+    return { color: 'bg-green-500', label: 'Face OK' };
+  };
+  const dot = faceStatusDot();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
 
-      {/* Hidden webcam feed and canvas for snapshots */}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        className="hidden"
-      />
+      {/* Webcam feed — small overlay in bottom-right */}
+      <div className="fixed bottom-4 right-4 z-30 rounded-xl overflow-hidden shadow-xl border-2 border-gray-200 bg-black" style={{ width: 180 }}>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          className="w-full block"
+          style={{ maxHeight: 135, objectFit: 'cover' }}
+        />
+        {/* Status bar */}
+        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-900">
+          <span className={`w-2 h-2 rounded-full ${dot.color} ${faceStatus.faceCount === 1 ? 'animate-pulse' : ''}`} />
+          <span className="text-xs text-gray-300 font-medium">{dot.label}</span>
+          {!faceStatus.modelLoaded && (
+            <span className="ml-auto text-[0.6rem] text-gray-500">AI init…</span>
+          )}
+        </div>
+      </div>
+
+      {/* Canvas for snapshots (always hidden) */}
       <canvas ref={canvasRef} className="hidden" />
+
+      {/* Face violation warning banner */}
+      {faceWarning && (
+        <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-center gap-3 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold shadow-lg animate-pulse">
+          <span>{faceWarning}</span>
+          <button onClick={() => setFaceWarning(null)} className="ml-4 text-white/70 hover:text-white text-lg leading-none">×</button>
+        </div>
+      )}
 
       {/* Top Bar */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">

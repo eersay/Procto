@@ -144,14 +144,14 @@ export default function MyResultsPage() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      {exam.result ? (
+                      {exam.result && exam.result.finalizedAt ? (
                         <div className="flex flex-col items-end gap-1.5">
                           <span className={`text-3xl font-bold ${exam.result.passStatus ? 'text-emerald-400' : 'text-red-400'}`}>
                             {exam.result.percentage.toFixed(1)}%
                           </span>
                           <span className={`text-[0.65rem] px-2.5 py-0.5 rounded-full font-medium border ${exam.result.passStatus
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                              : 'bg-red-500/10 text-red-400 border-red-500/30'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : 'bg-red-500/10 text-red-400 border-red-500/30'
                             }`}>
                             {exam.result.passStatus ? '✓ PASSED' : '✗ FAILED'}
                           </span>
@@ -162,7 +162,7 @@ export default function MyResultsPage() {
                           <span className="text-xs px-2.5 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-medium">
                             ⏳ Pending
                           </span>
-                          <span className="text-[0.65rem] text-neutral-600">Manual grading</span>
+                          <span className="text-[0.65rem] text-neutral-600">Awaiting grading</span>
                         </div>
                       )}
                     </div>

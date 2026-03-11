@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
+import { toCsv, downloadCsv, safeFilename } from '../lib/exportCsv';
 
 interface ExamGroup {
     exam: { id: string; title: string; course: { name: string; code: string }; hasEssayQuestions: boolean };
@@ -32,6 +33,23 @@ export default function GradingDashboardPage() {
             toast.success(publish ? 'All results published!' : 'All results unpublished');
             fetchPending();
         } catch { toast.error('Failed to update publish status'); }
+    };
+
+    const exportExam = (group: ExamGroup) => {
+        const rows = group.sessions.map((s: any) => ({
+            'First Name': s.student?.firstName ?? '',
+            'Last Name': s.student?.lastName ?? '',
+            Email: s.student?.email ?? '',
+            'Score': s.result?.totalScore?.toFixed(2) ?? 'Not graded',
+            'Percentage (%)': s.result?.percentage?.toFixed(1) ?? '',
+            'Pass/Fail': s.result ? (s.result.passStatus ? 'PASS' : 'FAIL') : 'Pending',
+            'Published': s.result?.isPublished ? 'Yes' : 'No',
+            'Violations': s._count?.suspiciousEvents ?? 0,
+            'Submitted At': s.submittedAt ? new Date(s.submittedAt).toLocaleString() : '',
+        }));
+        const fname = safeFilename(group.exam.course.code, group.exam.title, 'results');
+        downloadCsv(toCsv(rows), fname);
+        toast.success(`Exported ${rows.length} students`);
     };
 
     if (loading) return (
@@ -146,6 +164,10 @@ export default function GradingDashboardPage() {
                                                     ✍️ Essays
                                                 </span>
                                             )}
+                                            <button onClick={() => exportExam(group)}
+                                                className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 text-xs text-slate-400 hover:border-emerald-500/40 hover:text-emerald-300 transition-all">
+                                                ⬇ Export CSV
+                                            </button>
                                             <button onClick={() => navigate(`/analytics/${group.exam.id}`)}
                                                 className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 text-xs text-slate-400 hover:border-cyan-500/40 hover:text-cyan-300 transition-all">
                                                 📊 Analytics
@@ -194,8 +216,8 @@ export default function GradingDashboardPage() {
                                                     <div className="flex items-center gap-2">
                                                         {isGraded && (
                                                             <span className={`text-[0.65rem] px-2 py-0.5 rounded-full border font-medium ${isPublished
-                                                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                                                                    : 'bg-slate-800 border-slate-700 text-slate-500'
+                                                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                                                : 'bg-slate-800 border-slate-700 text-slate-500'
                                                                 }`}>
                                                                 {isPublished ? '✅ Published' : '🔒 Draft'}
                                                             </span>
