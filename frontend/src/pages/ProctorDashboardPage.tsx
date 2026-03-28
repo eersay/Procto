@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '../hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import { toCsv, downloadCsv, safeFilename } from '../lib/exportCsv';
+import { Sun, Moon } from 'lucide-react';
 
 interface ActiveSession {
   id: string; startedAt: string; status: string; timeElapsed: number; timeRemaining: number;
@@ -39,6 +41,7 @@ const severityBadge: Record<string, string> = {
 
 export default function ProctorDashboardPage() {
   const [sessions, setSessions] = useState<ActiveSession[]>([]);
+  const { theme, toggleTheme } = useTheme();
   const [selectedSession, setSelectedSession] = useState<SessionDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -101,16 +104,16 @@ export default function ProctorDashboardPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-      <div className="animate-spin h-8 w-8 border-2 border-cyan-400 border-t-transparent rounded-full" />
+    <div className={`min-h-screen ${theme === 'light' ? 'bg-slate-50' : 'bg-slate-950'} flex items-center justify-center`}>
+      <div className={`animate-spin h-8 w-8 border-2 border-t-transparent rounded-full ${theme === 'light' ? 'border-cyan-600' : 'border-cyan-400'}`} />
     </div>
   );
 
   const highSevTotal = sessions.reduce((s, sess) => s + sess.suspiciousEvents.filter(e => e.severity === 'HIGH').length, 0);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
+    <main className={`min-h-screen ${theme === 'light' ? 'bg-gradient-to-br from-slate-100 via-white to-slate-100 text-slate-900' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100'}`}>
+      <Toaster position="top-right" toastOptions={{ style: theme === 'light' ? { background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1' } : { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
 
       {/* Ambient glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -137,6 +140,9 @@ export default function ProctorDashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <button onClick={toggleTheme} className={`p-2 rounded-lg transition-colors ${theme === 'light' ? 'bg-white border border-slate-300 text-amber-600 hover:bg-slate-100' : 'bg-slate-800/70 border border-slate-700 text-slate-200 hover:bg-slate-700/70'}`}>
+              {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
               Auto-refresh · 10s
@@ -154,7 +160,7 @@ export default function ProctorDashboardPage() {
         {/* Title row */}
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
+            <h1 className={`text-2xl font-bold flex items-center gap-3 ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
               Live Proctor Dashboard
               {highSevTotal > 0 && (
                 <span className="text-xs px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 font-medium animate-pulse">
@@ -172,7 +178,7 @@ export default function ProctorDashboardPage() {
 
         {/* Sessions grid */}
         {sessions.length === 0 ? (
-          <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-16 text-center">
+          <div className={`rounded-2xl border backdrop-blur-sm p-16 text-center ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/60'}`}>
             <div className="text-5xl mb-4">📊</div>
             <h3 className="font-semibold text-slate-200 mb-2">No Active Exam Sessions</h3>
             <p className="text-sm text-slate-500">Students currently taking exams will appear here</p>
@@ -191,7 +197,7 @@ export default function ProctorDashboardPage() {
 
               return (
                 <div key={session.id} onClick={() => fetchSessionDetails(session.id)}
-                  className={`group rounded-2xl border bg-slate-900/60 backdrop-blur-sm p-5 cursor-pointer hover:shadow-lg transition-all duration-300 ${riskCls}`}>
+                  className={`group rounded-2xl border backdrop-blur-sm p-5 cursor-pointer hover:shadow-lg transition-all duration-300 ${theme === 'light' ? 'bg-white' : 'bg-slate-900/60'} ${riskCls}`}>
 
                   {/* Student */}
                   <div className="flex items-center gap-3 mb-4">
@@ -283,7 +289,7 @@ export default function ProctorDashboardPage() {
         )}
 
         {/* Footer */}
-        <footer className="mt-8 flex items-center justify-between border-t border-slate-800/80 pt-4 text-[0.7rem] text-slate-600 sm:text-xs">
+        <footer className={`mt-8 flex items-center justify-between border-t pt-4 text-[0.7rem] sm:text-xs ${theme === 'light' ? 'border-slate-200 text-slate-500' : 'border-slate-800/80 text-slate-600'}`}>
           <span>© {new Date().getFullYear()} Procto. Built for secure online exams.</span>
           <span className="hidden sm:inline">Designed for performance · React · TypeScript</span>
         </footer>
@@ -291,8 +297,8 @@ export default function ProctorDashboardPage() {
 
       {/* Session Details Modal */}
       {showDetailsModal && selectedSession && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="relative rounded-2xl border border-slate-700/60 bg-slate-900/95 backdrop-blur-xl w-full max-w-4xl my-8 shadow-2xl overflow-hidden">
+        <div className={`fixed inset-0 ${theme === 'light' ? 'bg-slate-900/40' : 'bg-black/70'} backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto`}>
+          <div className={`relative rounded-2xl border backdrop-blur-xl w-full max-w-4xl my-8 shadow-2xl overflow-hidden ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/95'}`}>
 
             {/* Modal header */}
             <div className="px-6 py-5 border-b border-slate-800 flex justify-between items-start">

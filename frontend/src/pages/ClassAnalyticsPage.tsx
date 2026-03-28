@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '../hooks/useTheme';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import { toCsv, downloadCsv, safeFilename } from '../lib/exportCsv';
+import { Sun, Moon } from 'lucide-react';
 
 interface Analytics {
     exam: { id: string; title: string; course: { name: string; code: string } };
@@ -28,6 +30,7 @@ export default function ClassAnalyticsPage() {
     const { examId } = useParams<{ examId: string }>();
     const navigate = useNavigate();
     const [data, setData] = useState<Analytics | null>(null);
+    const { theme, toggleTheme } = useTheme();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -78,10 +81,10 @@ export default function ClassAnalyticsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+            <div className={`min-h-screen ${theme === 'light' ? 'bg-gradient-to-br from-slate-100 via-white to-slate-100' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950'} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="text-6xl mb-4 animate-pulse">📊</div>
-                    <p className="text-slate-400 text-lg">Crunching the numbers…</p>
+                    <p className={`text-lg ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>Crunching the numbers…</p>
                 </div>
             </div>
         );
@@ -103,8 +106,8 @@ export default function ClassAnalyticsPage() {
     ];
 
     return (
-        <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-            <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
+        <main className={`min-h-screen ${theme === 'light' ? 'bg-gradient-to-br from-slate-100 via-white to-slate-100 text-slate-900' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100'}`}>
+            <Toaster position="top-right" toastOptions={{ style: theme === 'light' ? { background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1' } : { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
 
             {/* Ambient glows */}
             <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -129,6 +132,9 @@ export default function ClassAnalyticsPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        <button onClick={toggleTheme} className={`p-2 rounded-lg transition-colors ${theme === 'light' ? 'bg-white border border-slate-300 text-amber-600 hover:bg-slate-100' : 'bg-slate-800/70 border border-slate-700 text-slate-200 hover:bg-slate-700/70'}`}>
+                            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                        </button>
                         <button
                             onClick={exportSummary}
                             className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 text-xs font-semibold text-slate-400 hover:border-cyan-500/40 hover:text-cyan-300 transition-all"
@@ -155,14 +161,14 @@ export default function ClassAnalyticsPage() {
 
                 {/* Exam identity */}
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-slate-100">{data.exam.title}</h1>
+                    <h1 className={`text-2xl font-bold ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>{data.exam.title}</h1>
                     <p className="text-sm text-slate-500 mt-0.5">{data.exam.course.name} · <span className="font-mono text-slate-600">{data.exam.course.code}</span></p>
                 </div>
 
                 {/* Stat cards */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
                     {statCards.map((stat) => (
-                        <div key={stat.label} className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-4 text-center hover:border-slate-600/60 transition-all">
+                        <div key={stat.label} className={`rounded-2xl border backdrop-blur-sm p-4 text-center transition-all ${theme === 'light' ? 'border-slate-200 bg-white hover:border-slate-300' : 'border-slate-700/60 bg-slate-900/60 hover:border-slate-600/60'}`}>
                             <div className={`flex items-center justify-center gap-1.5 mb-2`}>
                                 <span className={`h-1.5 w-1.5 rounded-full ${stat.dot}`} />
                                 <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-slate-500">{stat.label}</p>
@@ -176,7 +182,7 @@ export default function ClassAnalyticsPage() {
                 <div className="grid lg:grid-cols-2 gap-6 mb-8">
 
                     {/* Score Distribution */}
-                    <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-6">
+                    <div className={`rounded-2xl border backdrop-blur-sm p-6 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/60'}`}>
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-5">Score Distribution</h2>
                         {data.gradedCount === 0 ? (
                             <p className="text-center text-slate-600 py-12">No graded submissions yet</p>
@@ -206,7 +212,7 @@ export default function ClassAnalyticsPage() {
                     </div>
 
                     {/* Pass / Fail donut */}
-                    <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-6">
+                    <div className={`rounded-2xl border backdrop-blur-sm p-6 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/60'}`}>
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-5">Pass / Fail Split</h2>
                         {data.gradedCount === 0 ? (
                             <p className="text-center text-slate-600 py-12">No graded submissions yet</p>
@@ -237,7 +243,7 @@ export default function ClassAnalyticsPage() {
                                         </defs>
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-2xl font-bold text-slate-100">{data.passRate}%</span>
+                                        <span className={`text-2xl font-bold ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>{data.passRate}%</span>
                                         <span className="text-[0.6rem] text-slate-500 uppercase tracking-wider">pass rate</span>
                                     </div>
                                 </div>
@@ -266,7 +272,7 @@ export default function ClassAnalyticsPage() {
                 </div>
 
                 {/* Per-question table */}
-                <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm overflow-hidden mb-16">
+                <div className={`rounded-2xl border backdrop-blur-sm overflow-hidden mb-16 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/60'}`}>
                     <div className="px-6 py-5 border-b border-slate-800">
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Per-Question Performance</h2>
                         <p className="text-xs text-slate-600 mt-0.5">How students performed on each question</p>
@@ -321,7 +327,7 @@ export default function ClassAnalyticsPage() {
                 </div>
 
                 {/* Footer */}
-                <footer className="flex items-center justify-between border-t border-slate-800/80 pt-4 text-[0.65rem] text-slate-700">
+                <footer className={`flex items-center justify-between border-t pt-4 text-[0.65rem] ${theme === 'light' ? 'border-slate-200 text-slate-500' : 'border-slate-800/80 text-slate-700'}`}>
                     <span>© {new Date().getFullYear()} Procto. Built for secure online exams.</span>
                     <span className="hidden sm:inline">Designed for performance · React · TypeScript</span>
                 </footer>

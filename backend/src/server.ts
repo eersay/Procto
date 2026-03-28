@@ -1,3 +1,4 @@
+import 'dotenv/config'; // Must be first
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -13,7 +14,7 @@ import resultRoutes from './routes/result.routes';
 import notificationRoutes from './routes/notification.routes';
 import passport from './utils/passport';
 
-dotenv.config();
+// dotenv.config(); // Loaded at top
 
 const app = express();
 const PORT = process.env.PORT || 4000;

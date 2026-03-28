@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Shield, Eye, Brain, Lock, Fingerprint, Cpu, Scan, Zap, ChevronRight, ArrowRight, Menu, X
+    Shield, Eye, Brain, Lock, Fingerprint, Cpu, Scan, ChevronRight, ArrowRight, Menu, X, Sun, Moon
 } from 'lucide-react';
 import ParticleField from '../components/ParticleField';
 import GlitchText from '../components/GlitchText';
+import { HeroSection } from '@/components/ui/hero-section-dark';
+import { useTheme } from '../hooks/useTheme';
 
 /* ── Data ─────────────────────────────────────────────────────── */
 const features = [
@@ -52,6 +54,7 @@ const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } 
 /* ── Component ────────────────────────────────────────────────── */
 export default function LandingPage() {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [scrollPct, setScrollPct] = useState(0);
     const [scrolled, setScrolled] = useState(false);
@@ -68,7 +71,7 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div className="landing-root">
+        <div className={`landing-root ${theme === 'light' ? 'landing-root--light' : ''}`}>
             <ParticleField />
 
             {/* Scroll progress */}
@@ -99,15 +102,31 @@ export default function LandingPage() {
 
                     {/* CTAs */}
                     <div className="landing-nav__ctas">
+                        <button
+                            onClick={toggleTheme}
+                            className="landing-theme-toggle"
+                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        </button>
                         <button onClick={() => navigate('/login')} className="landing-btn-primary">
                             Login
                         </button>
                     </div>
 
                     {/* Mobile toggle */}
-                    <button className="landing-nav__toggle" onClick={() => setMobileOpen(v => !v)}>
-                        {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                    </button>
+                    <div className="flex items-center gap-2 md:hidden">
+                        <button
+                            onClick={toggleTheme}
+                            className="landing-theme-toggle"
+                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        </button>
+                        <button className="landing-nav__toggle" onClick={() => setMobileOpen(v => !v)}>
+                            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Mobile menu */}
@@ -133,104 +152,16 @@ export default function LandingPage() {
             </nav>
 
             {/* ── HERO ───────────────────────────────────────────────── */}
-            <section id="home" className="landing-hero">
-                <div className="landing-container landing-hero__grid">
-
-                    {/* Left */}
-                    <motion.div initial="hidden" animate="visible" variants={stagger} className="landing-hero__left">
-                        <motion.div variants={fadeUp} custom={0} className="landing-badge">
-                            <Zap className="w-3 h-3" />
-                            Neural Integrity Systems v2.0 · Christ University MCA
-                        </motion.div>
-
-                        <motion.div variants={fadeUp} custom={1}>
-                            <h1 className="landing-hero__h1">
-                                <span className="landing-gradient-text">NEXT‑GEN</span>
-                                <br />
-                                <GlitchText className="landing-gradient-text--cyan">PROCTORING</GlitchText>
-                            </h1>
-                        </motion.div>
-
-                        <motion.p variants={fadeUp} custom={2} className="landing-hero__desc">
-                            AI-powered proctoring that ensures academic honesty through real-time
-                            behavioral analysis, computer vision, and neural pattern recognition.
-                        </motion.p>
-
-                        <motion.div variants={fadeUp} custom={3} className="landing-hero__ctas">
-                            <button onClick={() => navigate('/login?tab=faculty')} className="landing-btn-primary landing-btn-primary--lg">
-                                Faculty Portal
-                            </button>
-                            <button onClick={() => navigate('/login?tab=student')} className="landing-btn-outline landing-btn-outline--lg">
-                                Student Login <ArrowRight className="w-4 h-4" />
-                            </button>
-                        </motion.div>
-                    </motion.div>
-
-                    {/* Right – Live session card */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9, x: 40 }}
-                        animate={{ opacity: 1, scale: 1, x: 0 }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
-                        className="landing-hero__card-wrap"
-                    >
-                        <div className="landing-session-card">
-                            <div className="landing-session-card__glow" />
-                            <div className="landing-session-card__inner">
-                                <div className="landing-session-card__header">
-                                    <span className="landing-session-card__label">Live session</span>
-                                    <span className="landing-session-card__status">
-                                        <span className="landing-session-card__dot" /> Monitoring
-                                    </span>
-                                </div>
-
-                                <div className="landing-session-card__body">
-                                    <div className="landing-session-card__row">
-                                        <div>
-                                            <p className="landing-session-card__sublabel">Session code</p>
-                                            <p className="landing-session-card__code">PROCTO‑4821</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="landing-session-card__sublabel">Active students</p>
-                                            <p className="landing-session-card__code">32</p>
-                                        </div>
-                                    </div>
-
-                                    {/* QR decoration */}
-                                    <div className="landing-session-card__qr-row">
-                                        <div className="landing-session-card__qr-box">
-                                            <div className="landing-session-card__qr-dots" />
-                                        </div>
-                                        <div className="landing-session-card__qr-steps">
-                                            <p className="landing-session-card__sublabel">Join in 3 steps</p>
-                                            <ol className="landing-session-card__steps">
-                                                <li>1. Enter session code</li>
-                                                <li>2. Verify camera</li>
-                                                <li>3. Start exam securely</li>
-                                            </ol>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="landing-session-card__stats">
-                                    {[
-                                        { label: 'Anomalies', value: '0 flagged', color: 'text-amber-300' },
-                                        { label: 'Focus', value: '96%', color: 'text-emerald-300' },
-                                        { label: 'Integrity', value: 'Stable', color: 'text-cyan-300' },
-                                    ].map(s => (
-                                        <div key={s.label} className="landing-session-card__stat">
-                                            <p className="landing-session-card__sublabel">{s.label}</p>
-                                            <p className={`landing-session-card__stat-val ${s.color}`}>{s.value}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-
-                {/* Orbs */}
-                <div className="landing-orb landing-orb--tr" />
-                <div className="landing-orb landing-orb--bl" />
+            <section id="home">
+                <HeroSection
+                    title="Neural Integrity Systems v2.0 · Christ University MCA"
+                    subtitle={{ regular: "Next-Gen ", gradient: "AI Proctoring" }}
+                    description="AI-powered proctoring that ensures academic honesty through real-time behavioral analysis, computer vision, and neural pattern recognition."
+                    ctaText="Get Started"
+                    ctaHref="/login"
+                    ctaOnClick={() => navigate('/login')}
+                    gridOptions={{ angle: 65, cellSize: 60, opacity: 0.3, lightLineColor: '#e2e8f0', darkLineColor: '#1e293b' }}
+                />
             </section>
 
             {/* ── MARQUEE ────────────────────────────────────────────── */}
@@ -242,28 +173,6 @@ export default function LandingPage() {
                             {item}
                         </span>
                     ))}
-                </div>
-            </section>
-
-            {/* ── STATS ──────────────────────────────────────────────── */}
-            <section className="landing-stats-wrap">
-                <div className="landing-container">
-                    <motion.div
-                        className="landing-stats-grid"
-                        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger}
-                    >
-                        {[
-                            { value: '99.7%', label: 'Detection Accuracy' },
-                            { value: '<50ms', label: 'Response Latency' },
-                            { value: '10+', label: 'Event Types Tracked' },
-                            { value: '24/7', label: 'System Uptime' },
-                        ].map((s, i) => (
-                            <motion.div key={s.label} variants={fadeUp} custom={i} className="landing-stat">
-                                <p className="landing-stat__value">{s.value}</p>
-                                <p className="landing-stat__label">{s.label}</p>
-                            </motion.div>
-                        ))}
-                    </motion.div>
                 </div>
             </section>
 
@@ -401,11 +310,8 @@ export default function LandingPage() {
                             Whether you're a student or educator — there's a place for you in the PROCTO ecosystem.
                         </p>
                         <div className="landing-cta__btns">
-                            <button onClick={() => navigate('/login?tab=student')} className="landing-btn-primary landing-btn-primary--lg">
-                                Student Access
-                            </button>
-                            <button onClick={() => navigate('/login?tab=faculty')} className="landing-btn-outline landing-btn-outline--lg">
-                                Faculty Portal <ArrowRight className="w-4 h-4" />
+                            <button onClick={() => navigate('/login')} className="landing-btn-primary landing-btn-primary--lg">
+                                Get Started <ArrowRight className="w-4 h-4 inline ml-2" />
                             </button>
                         </div>
                     </motion.div>

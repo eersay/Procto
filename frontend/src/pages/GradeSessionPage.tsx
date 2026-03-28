@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
+import { useTheme } from '../hooks/useTheme';
+import { Sun, Moon } from 'lucide-react';
 
 interface Breakdown {
     questionNumber: number;
@@ -27,8 +29,9 @@ interface Answer {
 }
 
 export default function GradeSessionPage() {
-    const { examId, sessionId } = useParams<{ examId: string; sessionId: string }>();
+    const { sessionId } = useParams<{ examId: string; sessionId: string }>();
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
 
     const [session, setSession] = useState<any>(null);
     const [result, setResult] = useState<any>(null);
@@ -133,10 +136,10 @@ export default function GradeSessionPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${theme === 'light' ? 'bg-gray-50' : 'bg-slate-950'} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="text-6xl mb-4 animate-pulse">✍️</div>
-                    <p className="text-xl text-gray-600">Loading session...</p>
+                    <p className={`text-xl ${theme === 'light' ? 'text-gray-600' : 'text-slate-400'}`}>Loading session...</p>
                 </div>
             </div>
         );
@@ -147,27 +150,30 @@ export default function GradeSessionPage() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Toaster position="top-right" />
+        <div className={`min-h-screen ${theme === 'light' ? 'bg-gray-50' : 'bg-slate-950 text-slate-100'}`}>
+            <Toaster position="top-right" toastOptions={{ style: theme === 'light' ? { background: '#ffffff', color: '#0f172a', border: '1px solid #d1d5db' } : { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
 
             {/* Top Bar */}
-            <nav className="bg-white shadow-sm border-b sticky top-0 z-10">
+            <nav className={`shadow-sm border-b sticky top-0 z-10 ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-slate-900 border-slate-800'}`}>
                 <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate(`/grading`)} className="text-gray-500 hover:text-gray-800 text-sm">
+                        <button onClick={() => navigate(`/grading`)} className={`text-sm ${theme === 'light' ? 'text-gray-500 hover:text-gray-800' : 'text-slate-400 hover:text-slate-100'}`}>
                             ← Back
                         </button>
                         {session && (
                             <div>
-                                <p className="font-bold text-gray-900">
+                                <p className={`font-bold ${theme === 'light' ? 'text-gray-900' : 'text-slate-100'}`}>
                                     {session.student.firstName} {session.student.lastName}
                                 </p>
-                                <p className="text-xs text-gray-500">{session.exam.title}</p>
+                                <p className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-slate-400'}`}>{session.exam.title}</p>
                             </div>
                         )}
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <button onClick={toggleTheme} className={`p-2 rounded-lg transition-colors ${theme === 'light' ? 'bg-white border border-slate-300 text-amber-600 hover:bg-slate-100' : 'bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700'}`}>
+                            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                        </button>
                         {/* Publish toggle */}
                         {result && (
                             <button
@@ -204,19 +210,19 @@ export default function GradeSessionPage() {
                     <div className="col-span-1 space-y-4">
                         {/* Student info */}
                         {session && (
-                            <div className="bg-white rounded-xl shadow p-5">
-                                <h3 className="font-bold text-gray-800 mb-3">Student Info</h3>
+                            <div className={`rounded-xl shadow p-5 ${theme === 'light' ? 'bg-white' : 'bg-slate-900 border border-slate-800'}`}>
+                                <h3 className={`font-bold mb-3 ${theme === 'light' ? 'text-gray-800' : 'text-slate-200'}`}>Student Info</h3>
                                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-bold text-blue-600 mb-3">
                                     {session.student.firstName[0]}{session.student.lastName[0]}
                                 </div>
                                 <p className="font-semibold">{session.student.firstName} {session.student.lastName}</p>
-                                <p className="text-sm text-gray-500">{session.student.email}</p>
-                                <div className="mt-3 pt-3 border-t text-sm">
-                                    <p className="text-gray-500">Submitted</p>
+                                <p className={`text-sm ${theme === 'light' ? 'text-gray-500' : 'text-slate-400'}`}>{session.student.email}</p>
+                                <div className={`mt-3 pt-3 border-t text-sm ${theme === 'light' ? 'border-gray-200' : 'border-slate-800'}`}>
+                                    <p className={theme === 'light' ? 'text-gray-500' : 'text-slate-400'}>Submitted</p>
                                     <p className="font-medium">{new Date(session.submittedAt).toLocaleString()}</p>
                                 </div>
                                 {session._count?.suspiciousEvents > 0 && (
-                                    <div className="mt-3 pt-3 border-t">
+                                    <div className={`mt-3 pt-3 border-t ${theme === 'light' ? 'border-gray-200' : 'border-slate-800'}`}>
                                         <p className="text-red-600 text-sm font-semibold">
                                             ⚠️ {session._count.suspiciousEvents} suspicious events
                                         </p>
@@ -227,12 +233,12 @@ export default function GradeSessionPage() {
 
                         {/* Score summary */}
                         {result && (
-                            <div className="bg-white rounded-xl shadow p-5">
-                                <h3 className="font-bold text-gray-800 mb-3">Score Summary</h3>
+                            <div className={`rounded-xl shadow p-5 ${theme === 'light' ? 'bg-white' : 'bg-slate-900 border border-slate-800'}`}>
+                                <h3 className={`font-bold mb-3 ${theme === 'light' ? 'text-gray-800' : 'text-slate-200'}`}>Score Summary</h3>
                                 <p className={`text-4xl font-bold mb-1 ${result.passStatus ? 'text-green-600' : 'text-red-600'}`}>
                                     {result.percentage.toFixed(1)}%
                                 </p>
-                                <p className="text-gray-500 text-sm">{result.totalScore.toFixed(1)} points</p>
+                                <p className={`text-sm ${theme === 'light' ? 'text-gray-500' : 'text-slate-400'}`}>{result.totalScore.toFixed(1)} points</p>
                                 <span className={`mt-2 inline-block px-3 py-1 rounded-full text-sm font-semibold ${result.passStatus ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                     }`}>
                                     {result.passStatus ? '✓ PASSED' : '✗ FAILED'}
@@ -256,7 +262,7 @@ export default function GradeSessionPage() {
                             return (
                                 <div
                                     key={bd.questionNumber}
-                                    className={`bg-white rounded-xl shadow p-6 ${isManual && currentScore === null ? 'border-2 border-yellow-300' : 'border border-gray-100'
+                                    className={`${theme === 'light' ? 'bg-white border-gray-100' : 'bg-slate-900 border-slate-800'} rounded-xl shadow p-6 ${isManual && currentScore === null ? 'border-2 border-yellow-300' : 'border'
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-4">

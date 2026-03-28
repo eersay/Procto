@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '../hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import { toCsv, downloadCsv, safeFilename } from '../lib/exportCsv';
+import { Sun, Moon } from 'lucide-react';
 
 interface ExamGroup {
     exam: { id: string; title: string; course: { name: string; code: string }; hasEssayQuestions: boolean };
@@ -14,6 +16,7 @@ interface ExamGroup {
 
 export default function GradingDashboardPage() {
     const [examGroups, setExamGroups] = useState<ExamGroup[]>([]);
+    const { theme, toggleTheme } = useTheme();
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -53,8 +56,8 @@ export default function GradingDashboardPage() {
     };
 
     if (loading) return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-            <div className="animate-spin h-8 w-8 border-2 border-violet-400 border-t-transparent rounded-full" />
+        <div className={`min-h-screen ${theme === 'light' ? 'bg-slate-50' : 'bg-slate-950'} flex items-center justify-center`}>
+            <div className={`animate-spin h-8 w-8 border-2 border-t-transparent rounded-full ${theme === 'light' ? 'border-violet-600' : 'border-violet-400'}`} />
         </div>
     );
 
@@ -63,8 +66,8 @@ export default function GradingDashboardPage() {
     const totalUnpublished = examGroups.reduce((s, g) => s + g.unpublished, 0);
 
     return (
-        <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-            <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
+        <main className={`min-h-screen ${theme === 'light' ? 'bg-gradient-to-br from-slate-100 via-white to-slate-100 text-slate-900' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100'}`}>
+            <Toaster position="top-right" toastOptions={{ style: theme === 'light' ? { background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1' } : { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
 
             {/* Ambient glow */}
             <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -88,6 +91,9 @@ export default function GradingDashboardPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
+                        <button onClick={toggleTheme} className={`p-2 rounded-lg transition-colors ${theme === 'light' ? 'bg-white border border-slate-300 text-amber-600 hover:bg-slate-100' : 'bg-slate-800/70 border border-slate-700 text-slate-200 hover:bg-slate-700/70'}`}>
+                            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                        </button>
                         {totalPending > 0 && (
                             <span className="text-xs px-3 py-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 font-medium">
                                 {totalPending} pending
@@ -105,8 +111,8 @@ export default function GradingDashboardPage() {
 
                 {/* Page title */}
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-slate-100">Grading Center</h1>
-                    <p className="text-sm text-slate-500 mt-0.5">Review and publish student exam results</p>
+                    <h1 className={`text-2xl font-bold ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>Grading Center</h1>
+                    <p className={`text-sm mt-0.5 ${theme === 'light' ? 'text-slate-600' : 'text-slate-500'}`}>Review and publish student exam results</p>
                 </div>
 
                 {/* Summary stats */}
@@ -116,7 +122,7 @@ export default function GradingDashboardPage() {
                         { label: 'Pending Grading', value: totalPending, color: 'text-yellow-400', dot: 'bg-yellow-500' },
                         { label: 'Unpublished', value: totalUnpublished, color: 'text-violet-400', dot: 'bg-violet-500' },
                     ].map(({ label, value, color, dot }) => (
-                        <div key={label} className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-5">
+                        <div key={label} className={`rounded-2xl border backdrop-blur-sm p-5 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/60'}`}>
                             <div className="flex items-center gap-2 mb-1">
                                 <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
                                 <p className="text-xs text-slate-500">{label}</p>
@@ -128,22 +134,22 @@ export default function GradingDashboardPage() {
 
                 {/* Exam groups */}
                 {examGroups.length === 0 ? (
-                    <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm p-16 text-center">
+                    <div className={`rounded-2xl border backdrop-blur-sm p-16 text-center ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/60'}`}>
                         <div className="text-5xl mb-4">🎉</div>
-                        <h3 className="font-semibold text-slate-200 mb-2">All caught up!</h3>
+                        <h3 className={`font-semibold mb-2 ${theme === 'light' ? 'text-slate-800' : 'text-slate-200'}`}>All caught up!</h3>
                         <p className="text-sm text-slate-500">No submitted exams waiting for grading.</p>
                     </div>
                 ) : (
                     <div className="space-y-6 pb-16">
                         {examGroups.map(group => (
                             <div key={group.exam.id}
-                                className="rounded-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+                                className={`rounded-2xl border backdrop-blur-sm overflow-hidden ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/60'}`}>
 
                                 {/* Exam header */}
-                                <div className="px-6 py-5 border-b border-slate-800 bg-gradient-to-r from-violet-500/10 via-transparent to-cyan-500/10">
+                                <div className={`px-6 py-5 border-b bg-gradient-to-r ${theme === 'light' ? 'border-slate-200 from-violet-500/10 via-transparent to-cyan-500/10' : 'border-slate-800 from-violet-500/10 via-transparent to-cyan-500/10'}`}>
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
-                                            <h2 className="text-lg font-bold text-slate-100">{group.exam.title}</h2>
+                                            <h2 className={`text-lg font-bold ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>{group.exam.title}</h2>
                                             <p className="text-xs text-slate-500 mt-0.5">
                                                 <span className="font-mono text-slate-600">{group.exam.course.code}</span>
                                                 {' · '}{group.exam.course.name}
@@ -181,20 +187,20 @@ export default function GradingDashboardPage() {
                                 </div>
 
                                 {/* Student rows */}
-                                <div className="divide-y divide-slate-800">
+                                <div className={`divide-y ${theme === 'light' ? 'divide-slate-200' : 'divide-slate-800'}`}>
                                     {group.sessions.map((session: any) => {
                                         const isGraded = !!session.result?.finalizedAt;
                                         const isPublished = !!session.result?.isPublished;
 
                                         return (
                                             <div key={session.id}
-                                                className="flex items-center justify-between px-6 py-4 hover:bg-slate-800/30 transition-colors">
+                                                className={`flex items-center justify-between px-6 py-4 transition-colors ${theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-slate-800/30'}`}>
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-violet-500/20 flex items-center justify-center text-xs font-bold text-violet-300 shrink-0">
                                                         {session.student.firstName[0]}{session.student.lastName[0]}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-semibold text-slate-200">
+                                                        <p className={`text-sm font-semibold ${theme === 'light' ? 'text-slate-800' : 'text-slate-200'}`}>
                                                             {session.student.firstName} {session.student.lastName}
                                                         </p>
                                                         <p className="text-xs text-slate-600">{session.student.email}</p>
@@ -244,7 +250,7 @@ export default function GradingDashboardPage() {
                 )}
 
                 {/* Footer */}
-                <footer className="mt-8 flex items-center justify-between border-t border-slate-800/80 pt-4 text-[0.7rem] text-slate-600 sm:text-xs">
+                <footer className={`mt-8 flex items-center justify-between border-t pt-4 text-[0.7rem] sm:text-xs ${theme === 'light' ? 'border-slate-200 text-slate-500' : 'border-slate-800/80 text-slate-600'}`}>
                     <span>© {new Date().getFullYear()} Procto. Built for secure online exams.</span>
                     <span className="hidden sm:inline">Designed for performance · React · TypeScript</span>
                 </footer>

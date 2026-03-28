@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sun, Moon } from 'lucide-react';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
+import { useTheme } from '../hooks/useTheme';
 
 interface Course {
     id: string; name: string; code: string; description: string | null;
@@ -11,6 +13,7 @@ interface Course {
 }
 
 export default function MyCoursesPage() {
+    const { theme, toggleTheme } = useTheme();
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [courseCode, setCourseCode] = useState('');
@@ -43,15 +46,22 @@ export default function MyCoursesPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+            <div className={`min-h-screen flex items-center justify-center ${theme === 'light' ? 'bg-slate-50' : 'bg-neutral-950'}`}>
                 <div className="animate-spin h-8 w-8 border-2 border-emerald-400 border-t-transparent rounded-full" />
             </div>
         );
     }
 
     return (
-        <main className="min-h-screen bg-neutral-950 text-white">
-            <Toaster position="top-right" toastOptions={{ style: { background: '#171717', color: '#fff', border: '1px solid #374151' } }} />
+        <main className={`min-h-screen ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-neutral-950 text-white'}`}>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    style: theme === 'light'
+                        ? { background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1' }
+                        : { background: '#171717', color: '#fff', border: '1px solid #374151' },
+                }}
+            />
 
             {/* Ambient glow */}
             <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -59,30 +69,47 @@ export default function MyCoursesPage() {
                 <div className="absolute -right-32 bottom-20 h-80 w-80 rounded-full bg-emerald-500/15 blur-3xl" />
             </div>
             <div className="pointer-events-none fixed inset-0 opacity-[0.025]"
-                style={{ backgroundImage: `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,0.04) 2px,rgba(255,255,255,0.04) 4px)` }} />
+                style={{
+                    backgroundImage: theme === 'light'
+                        ? `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(15,23,42,0.05) 2px,rgba(15,23,42,0.05) 4px)`
+                        : `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,0.04) 2px,rgba(255,255,255,0.04) 4px)`,
+                }} />
 
             <div className="relative mx-auto w-full px-6 py-8 sm:px-8 lg:px-12 xl:px-20 xl:py-12">
 
                 {/* Header */}
                 <header className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-900 ring-1 ring-emerald-500/40 shadow-lg shadow-emerald-500/20">
+                        <div className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ring-emerald-500/40 shadow-lg shadow-emerald-500/20 ${theme === 'light' ? 'bg-white' : 'bg-neutral-900'}`}>
                             <span className="text-lg font-semibold tracking-tight text-emerald-400">P</span>
                         </div>
                         <div className="flex flex-col leading-tight">
-                            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-neutral-400">Procto</span>
-                            <span className="text-xs text-neutral-600">Student Portal</span>
+                            <span className={`text-sm font-semibold uppercase tracking-[0.18em] ${theme === 'light' ? 'text-slate-600' : 'text-neutral-400'}`}>Procto</span>
+                            <span className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-neutral-600'}`}>Student Portal</span>
                         </div>
                     </div>
-                    <button onClick={() => setShowEnroll(true)}
-                        className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 transition-all hover:scale-105">
-                        + Join Course
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={toggleTheme}
+                            className={`p-2 rounded-lg border transition-all ${
+                                theme === 'light'
+                                    ? 'bg-white border-slate-300 text-slate-600 hover:text-emerald-600'
+                                    : 'bg-neutral-900/70 border-neutral-700/60 text-neutral-400 hover:text-emerald-400'
+                            }`}
+                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        </button>
+                        <button onClick={() => setShowEnroll(true)}
+                            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 transition-all hover:scale-105">
+                            + Join Course
+                        </button>
+                    </div>
                 </header>
 
                 {/* Back + title */}
                 <button onClick={() => navigate('/student')}
-                    className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-emerald-400 transition-colors mt-8 group">
+                    className={`inline-flex items-center gap-2 text-sm transition-colors mt-8 group ${theme === 'light' ? 'text-slate-500 hover:text-emerald-600' : 'text-neutral-500 hover:text-emerald-400'}`}>
                     <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
@@ -91,7 +118,7 @@ export default function MyCoursesPage() {
 
                 <div className="mt-4 flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">My Courses</h1>
+                        <h1 className={`text-2xl font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>My Courses</h1>
                         <p className="text-sm text-neutral-500 mt-0.5">{courses.length} enrolled</p>
                     </div>
                 </div>
@@ -99,10 +126,10 @@ export default function MyCoursesPage() {
                 {/* Course Grid */}
                 <section className="mt-8 pb-16">
                     {courses.length === 0 ? (
-                        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 backdrop-blur-sm p-16 text-center">
+                        <div className={`rounded-2xl border backdrop-blur-sm p-16 text-center ${theme === 'light' ? 'border-slate-300 bg-white/90' : 'border-neutral-800 bg-neutral-900/60'}`}>
                             <div className="text-5xl mb-4">🎓</div>
-                            <h3 className="font-semibold text-neutral-200 mb-2">No courses yet</h3>
-                            <p className="text-sm text-neutral-600 mb-6">Join a course using the code from your faculty</p>
+                            <h3 className={`font-semibold mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-neutral-200'}`}>No courses yet</h3>
+                            <p className={`text-sm mb-6 ${theme === 'light' ? 'text-slate-500' : 'text-neutral-600'}`}>Join a course using the code from your faculty</p>
                             <button onClick={() => setShowEnroll(true)}
                                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400 transition-all">
                                 + Join Your First Course
@@ -112,7 +139,7 @@ export default function MyCoursesPage() {
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {courses.map(course => (
                                 <button key={course.id} onClick={() => navigate(`/course/${course.id}`)}
-                                    className="group relative rounded-2xl border border-neutral-800 bg-neutral-900/60 backdrop-blur-sm p-6 text-left hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden">
+                                    className={`group relative rounded-2xl border backdrop-blur-sm p-6 text-left hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden ${theme === 'light' ? 'border-slate-200 bg-white/90' : 'border-neutral-800 bg-neutral-900/60'}`}>
 
                                     {/* Hover gradient */}
                                     <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -122,10 +149,10 @@ export default function MyCoursesPage() {
 
                                     <div className="relative">
                                         <div className="flex items-start justify-between gap-2 mb-3">
-                                            <h3 className="text-base font-semibold text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
+                                            <h3 className={`text-base font-semibold group-hover:text-emerald-400 transition-colors line-clamp-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                                                 {course.name}
                                             </h3>
-                                            <span className="shrink-0 text-xs font-mono px-2 py-0.5 rounded-full border border-neutral-700 bg-neutral-800 text-neutral-400">
+                                            <span className={`shrink-0 text-xs font-mono px-2 py-0.5 rounded-full border ${theme === 'light' ? 'border-slate-300 bg-slate-100 text-slate-600' : 'border-neutral-700 bg-neutral-800 text-neutral-400'}`}>
                                                 {course.code}
                                             </span>
                                         </div>
@@ -138,7 +165,7 @@ export default function MyCoursesPage() {
                                             <p className="text-xs text-neutral-600 mt-2 line-clamp-2">{course.description}</p>
                                         )}
 
-                                        <div className="flex gap-4 mt-4 pt-4 border-t border-neutral-800 text-xs text-neutral-500">
+                                        <div className={`flex gap-4 mt-4 pt-4 border-t text-xs ${theme === 'light' ? 'border-slate-200 text-slate-500' : 'border-neutral-800 text-neutral-500'}`}>
                                             <span className="flex items-center gap-1">
                                                 <svg className="w-3.5 h-3.5 text-emerald-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
@@ -160,7 +187,7 @@ export default function MyCoursesPage() {
                 </section>
 
                 {/* Footer */}
-                <footer className="flex items-center justify-between border-t border-neutral-800 pt-4 text-[0.7rem] text-neutral-600 sm:text-xs">
+                <footer className={`flex items-center justify-between border-t pt-4 text-[0.7rem] sm:text-xs ${theme === 'light' ? 'border-slate-300 text-slate-500' : 'border-neutral-800 text-neutral-600'}`}>
                     <span>© {new Date().getFullYear()} Procto. Built for secure online exams.</span>
                     <span className="hidden sm:inline">Designed for performance · React · TypeScript</span>
                 </footer>
@@ -168,15 +195,15 @@ export default function MyCoursesPage() {
 
             {/* Join Course Modal */}
             {showEnroll && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="relative rounded-2xl border border-neutral-700/60 bg-neutral-900/95 backdrop-blur-xl w-full max-w-md p-8 shadow-2xl">
+                <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50 ${theme === 'light' ? 'bg-slate-900/40' : 'bg-black/70'}`}>
+                    <div className={`relative rounded-2xl border backdrop-blur-xl w-full max-w-md p-8 shadow-2xl ${theme === 'light' ? 'border-slate-300 bg-white/95' : 'border-neutral-700/60 bg-neutral-900/95'}`}>
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h3 className="text-xl font-bold text-white">Join a Course</h3>
-                                <p className="text-sm text-neutral-500 mt-0.5">Enter the code from your faculty</p>
+                                <h3 className={`text-xl font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Join a Course</h3>
+                                <p className={`text-sm mt-0.5 ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>Enter the code from your faculty</p>
                             </div>
                             <button onClick={() => setShowEnroll(false)}
-                                className="text-neutral-500 hover:text-white transition-colors text-2xl leading-none">×</button>
+                                className={`transition-colors text-2xl leading-none ${theme === 'light' ? 'text-slate-500 hover:text-slate-900' : 'text-neutral-500 hover:text-white'}`}>×</button>
                         </div>
                         <form onSubmit={handleEnroll} className="space-y-4">
                             <input
@@ -184,13 +211,13 @@ export default function MyCoursesPage() {
                                 value={courseCode}
                                 onChange={e => setCourseCode(e.target.value.toUpperCase())}
                                 placeholder="CS101-XY9"
-                                className="w-full px-4 py-3 rounded-xl border border-neutral-700 bg-neutral-950 text-white text-center font-mono text-lg tracking-widest placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition"
+                                className={`w-full px-4 py-3 rounded-xl border text-center font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition ${theme === 'light' ? 'border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400' : 'border-neutral-700 bg-neutral-950 text-white placeholder:text-neutral-600'}`}
                                 required autoFocus
                             />
                             <p className="text-xs text-neutral-600 text-center">Ask your faculty for the course code</p>
                             <div className="flex gap-3 pt-1">
                                 <button type="button" onClick={() => setShowEnroll(false)}
-                                    className="flex-1 py-3 rounded-xl border border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500 transition text-sm">
+                                    className={`flex-1 py-3 rounded-xl border transition text-sm ${theme === 'light' ? 'border-slate-300 text-slate-600 hover:text-slate-900 hover:border-slate-400' : 'border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500'}`}>
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={enrolling}

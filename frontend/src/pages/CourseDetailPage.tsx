@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
+import { useTheme } from '../hooks/useTheme';
+import { Sun, Moon } from 'lucide-react';
 
 type Tab = 'announcements' | 'exams' | 'roster' | 'performance' | 'grades' | 'settings';
 
@@ -25,8 +27,35 @@ interface GradeEntry {
 
 // ─── role-aware theme tokens ─────────────────────────────────────────────────
 // Faculty: violet/cyan  |  Student: emerald
-function makeTheme(faculty: boolean) {
-    return faculty ? {
+function makeTheme(faculty: boolean, isLight: boolean) {
+    if (faculty && isLight) return {
+        bg: 'bg-gradient-to-br from-slate-100 via-white to-slate-100',
+        glowL: 'bg-violet-300/20',
+        glowR: 'bg-cyan-300/20',
+        ring: 'ring-cyan-500/30',
+        shadow: 'shadow-cyan-300/20',
+        logo: 'text-cyan-700',
+        subtitle: 'Faculty Portal',
+        badge: 'border-violet-300 bg-violet-50 text-violet-700',
+        badgeDot: 'bg-violet-500',
+        badgeLabel: 'Faculty View',
+        cardBorder: 'border-slate-200',
+        cardGlow: 'from-violet-300/30 via-transparent to-cyan-300/30',
+        accent: 'text-cyan-700',
+        iconAccent: 'text-cyan-700',
+        cta: 'bg-violet-600 hover:bg-violet-500 shadow-violet-400/30 text-white',
+        tabActive: 'border-violet-600 text-violet-700',
+        avatar: 'from-violet-600 to-cyan-600',
+        avatarSm: 'from-violet-100 to-cyan-100 border-violet-300 text-violet-700',
+        btnPrimary: 'bg-violet-600 hover:bg-violet-500 shadow-violet-400/30 text-white',
+        btnSecondary: 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-slate-900',
+        toastBg: '#ffffff',
+        toastBorder: '#cbd5e1',
+        inputFocus: 'focus:ring-violet-500/40 focus:border-violet-500/40',
+        hoverBorder: 'hover:border-violet-400/60',
+        infoBox: 'border-violet-200 bg-violet-50 text-violet-700',
+    };
+    if (faculty) return {
         bg: 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950',
         glowL: 'bg-violet-500/25',
         glowR: 'bg-cyan-500/20',
@@ -52,7 +81,35 @@ function makeTheme(faculty: boolean) {
         inputFocus: 'focus:ring-violet-500/40 focus:border-violet-500/40',
         hoverBorder: 'hover:border-violet-400/50',
         infoBox: 'border-violet-500/20 bg-violet-500/5 text-violet-300',
-    } : {
+    };
+    if (isLight) return {
+        bg: 'bg-gradient-to-br from-slate-100 via-white to-slate-100',
+        glowL: 'bg-emerald-300/20',
+        glowR: 'bg-emerald-300/15',
+        ring: 'ring-emerald-500/40',
+        shadow: 'shadow-emerald-300/20',
+        logo: 'text-emerald-700',
+        subtitle: 'Student Portal',
+        badge: 'border-emerald-300 bg-emerald-50 text-emerald-700',
+        badgeDot: 'bg-emerald-500',
+        badgeLabel: 'Student View',
+        cardBorder: 'border-slate-200',
+        cardGlow: 'from-emerald-300/30 via-transparent to-emerald-300/30',
+        accent: 'text-emerald-700',
+        iconAccent: 'text-emerald-700',
+        cta: 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-400/30 text-white',
+        tabActive: 'border-emerald-600 text-emerald-700',
+        avatar: 'from-emerald-600 to-teal-600',
+        avatarSm: 'from-emerald-100 to-teal-100 border-emerald-300 text-emerald-700',
+        btnPrimary: 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-400/30 text-white',
+        btnSecondary: 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-slate-900',
+        toastBg: '#ffffff',
+        toastBorder: '#cbd5e1',
+        inputFocus: 'focus:ring-emerald-500/40 focus:border-emerald-500/40',
+        hoverBorder: 'hover:border-emerald-500/50',
+        infoBox: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    };
+    return {
         bg: 'bg-neutral-950',
         glowL: 'bg-emerald-500/20',
         glowR: 'bg-emerald-500/15',
@@ -89,7 +146,8 @@ export default function CourseDetailPage() {
     const user = userRaw ? JSON.parse(userRaw) : null;
     const role: string = user?.role || 'STUDENT';
     const isFaculty = role === 'FACULTY' || role === 'ADMIN';
-    const t = makeTheme(isFaculty);
+    const { theme, toggleTheme } = useTheme();
+    const t = makeTheme(isFaculty, theme === 'light');
 
     const [course, setCourse] = useState<any>(null);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -191,8 +249,8 @@ export default function CourseDetailPage() {
     const getInitials = () => `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase();
 
     return (
-        <main className={`min-h-screen ${t.bg} text-white`}>
-            <Toaster position="top-right" toastOptions={{ style: { background: t.toastBg, color: '#fff', border: `1px solid ${t.toastBorder}` } }} />
+        <main className={`min-h-screen ${t.bg} ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+            <Toaster position="top-right" toastOptions={{ style: { background: t.toastBg, color: theme === 'light' ? '#0f172a' : '#fff', border: `1px solid ${t.toastBorder}` } }} />
 
             {/* Ambient Glow */}
             <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -217,23 +275,27 @@ export default function CourseDetailPage() {
                     </div>
 
                     {/* Profile */}
-                    <div className="relative group">
-                        <button className={`flex items-center gap-3 rounded-full border border-slate-700/60 bg-slate-900/70 px-3 py-1.5 hover:${t.ring.replace('ring-', 'border-')} transition-all duration-300`}>
+                    <div className="flex items-center gap-3">
+                        <button onClick={toggleTheme} className={`p-2 rounded-lg transition-colors ${theme === 'light' ? 'bg-white border border-slate-300 text-amber-600 hover:bg-slate-100' : 'bg-slate-800/70 border border-slate-700 text-slate-200 hover:bg-slate-700/70'}`}>
+                            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                        </button>
+                        <div className="relative group">
+                            <button className={`flex items-center gap-3 rounded-full border px-3 py-1.5 transition-all duration-300 ${theme === 'light' ? 'border-slate-300 bg-white' : 'border-slate-700/60 bg-slate-900/70'}`}>
                             <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${t.avatar} flex items-center justify-center text-white font-semibold text-sm`}>
                                 {getInitials()}
                             </div>
                             <div className="hidden sm:flex flex-col items-start leading-tight">
-                                <span className="text-sm font-medium text-slate-200">{user?.firstName || user?.email}</span>
-                                <span className="text-[0.65rem] text-slate-500">{isFaculty ? 'Faculty' : 'Student'}</span>
+                                <span className={`text-sm font-medium ${theme === 'light' ? 'text-slate-800' : 'text-slate-200'}`}>{user?.firstName || user?.email}</span>
+                                <span className={`text-[0.65rem] ${theme === 'light' ? 'text-slate-600' : 'text-slate-500'}`}>{isFaculty ? 'Faculty' : 'Student'}</span>
                             </div>
                             <svg className="w-4 h-4 text-slate-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
-                        </button>
-                        <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                            <div className="rounded-xl border border-slate-700/60 bg-slate-900/95 backdrop-blur-xl shadow-xl p-2">
+                            </button>
+                            <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <div className={`rounded-xl border backdrop-blur-xl shadow-xl p-2 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-slate-700/60 bg-slate-900/95'}`}>
                                 {user?.email && (
-                                    <div className="px-3 py-2 text-xs text-slate-500 truncate border-b border-slate-700/60 mb-1 pb-2">{user.email}</div>
+                                    <div className={`px-3 py-2 text-xs truncate border-b mb-1 pb-2 ${theme === 'light' ? 'text-slate-600 border-slate-200' : 'text-slate-500 border-slate-700/60'}`}>{user.email}</div>
                                 )}
                                 <button onClick={() => { localStorage.clear(); navigate('/login'); }}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 rounded-lg hover:bg-red-500/10 transition-colors">
@@ -244,6 +306,7 @@ export default function CourseDetailPage() {
                                 </button>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </header>
 
@@ -260,7 +323,7 @@ export default function CourseDetailPage() {
                 <section className="mt-6">
                     <div className="relative">
                         <div className={`absolute -inset-1 rounded-3xl bg-gradient-to-r ${t.cardGlow} opacity-60 blur-xl`} />
-                        <div className={`relative rounded-3xl border ${t.cardBorder} bg-slate-900/90 p-6 sm:p-8 backdrop-blur-xl shadow-2xl`}>
+                        <div className={`relative rounded-3xl border ${t.cardBorder} ${theme === 'light' ? 'bg-white' : 'bg-slate-900/90'} p-6 sm:p-8 backdrop-blur-xl shadow-2xl`}>
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                 <div>
                                     <div className="flex items-center gap-3 mb-2">
@@ -268,12 +331,12 @@ export default function CourseDetailPage() {
                                             <span className={`h-1.5 w-1.5 rounded-full ${t.badgeDot}`} />
                                             {t.badgeLabel}
                                         </span>
-                                        <span className="inline-flex items-center rounded-full border border-slate-700/60 bg-slate-800/60 px-3 py-1 text-xs font-mono text-slate-400">
+                                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-mono ${theme === 'light' ? 'border-slate-300 bg-slate-100 text-slate-700' : 'border-slate-700/60 bg-slate-800/60 text-slate-400'}`}>
                                             {course?.code}
                                         </span>
                                     </div>
-                                    <h1 className="text-2xl sm:text-3xl font-bold text-white">{course?.name}</h1>
-                                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                                    <h1 className={`text-2xl sm:text-3xl font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{course?.name}</h1>
+                                    <div className={`mt-2 flex flex-wrap items-center gap-4 text-sm ${theme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
                                         <span className="flex items-center gap-1.5">
                                             <svg className={`w-4 h-4 ${t.iconAccent}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -288,7 +351,7 @@ export default function CourseDetailPage() {
                                         </span>
                                     </div>
                                     {course?.description && (
-                                        <p className="mt-3 text-sm text-slate-500 max-w-2xl">{course.description}</p>
+                                        <p className={`mt-3 text-sm max-w-2xl ${theme === 'light' ? 'text-slate-600' : 'text-slate-500'}`}>{course.description}</p>
                                     )}
                                 </div>
                                 {isFaculty && (
@@ -305,11 +368,11 @@ export default function CourseDetailPage() {
                 </section>
 
                 {/* ── TABS ── */}
-                <div className="mt-8 flex gap-1 border-b border-slate-800 overflow-x-auto">
+                <div className={`mt-8 flex gap-1 border-b overflow-x-auto ${theme === 'light' ? 'border-slate-200' : 'border-slate-800'}`}>
                     {tabs.map(tab => (
                         <button key={tab.id}
                             onClick={() => { setActiveTab(tab.id); if (tab.id === 'performance') fetchPerformance(); }}
-                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all -mb-px ${activeTab === tab.id ? t.tabActive : 'border-transparent text-slate-500 hover:text-slate-300'
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all -mb-px ${activeTab === tab.id ? t.tabActive : theme === 'light' ? 'border-transparent text-slate-500 hover:text-slate-700' : 'border-transparent text-slate-500 hover:text-slate-300'
                                 }`}>
                             <span>{tab.icon}</span>
                             {tab.label}
@@ -334,23 +397,23 @@ export default function CourseDetailPage() {
 
                             {showAnnounceForm && (
                                 <form onSubmit={handlePostAnnouncement}
-                                    className={`rounded-2xl border ${t.cardBorder} bg-slate-900/80 backdrop-blur-sm p-6 space-y-4`}>
-                                    <h3 className="font-semibold text-white">New Announcement</h3>
+                                    className={`rounded-2xl border ${t.cardBorder} ${theme === 'light' ? 'bg-white' : 'bg-slate-900/80'} backdrop-blur-sm p-6 space-y-4`}>
+                                    <h3 className={`font-semibold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>New Announcement</h3>
                                     <input type="text" value={announceTitle} onChange={e => setAnnounceTitle(e.target.value)}
                                         placeholder="Title" required
-                                        className={`w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 ${t.inputFocus} transition`} />
+                                        className={`w-full px-4 py-2.5 rounded-xl border ${theme === 'light' ? 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400' : 'border-slate-700 bg-slate-950 text-white placeholder:text-slate-600'} focus:outline-none focus:ring-2 ${t.inputFocus} transition`} />
                                     <textarea value={announceBody} onChange={e => setAnnounceBody(e.target.value)}
                                         placeholder="Write your announcement here..." required rows={4}
-                                        className={`w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 ${t.inputFocus} transition resize-none`} />
+                                        className={`w-full px-4 py-2.5 rounded-xl border ${theme === 'light' ? 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400' : 'border-slate-700 bg-slate-950 text-white placeholder:text-slate-600'} focus:outline-none focus:ring-2 ${t.inputFocus} transition resize-none`} />
                                     <div className="flex items-center justify-between">
-                                        <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
+                                        <label className={`flex items-center gap-2 text-sm cursor-pointer ${theme === 'light' ? 'text-slate-700' : 'text-slate-400'}`}>
                                             <input type="checkbox" checked={announcePinned} onChange={e => setAnnouncePinned(e.target.checked)}
                                                 className="rounded" />
                                             📌 Pin this
                                         </label>
                                         <div className="flex gap-2">
                                             <button type="button" onClick={() => setShowAnnounceForm(false)}
-                                                className="px-4 py-2 rounded-xl border border-slate-700 text-slate-400 hover:text-white transition text-sm">Cancel</button>
+                                                className={`px-4 py-2 rounded-xl border transition text-sm ${theme === 'light' ? 'border-slate-300 text-slate-700 hover:text-slate-900' : 'border-slate-700 text-slate-400 hover:text-white'}`}>Cancel</button>
                                             <button type="submit" disabled={posting}
                                                 className={`px-4 py-2 rounded-xl font-semibold text-sm transition disabled:opacity-50 ${t.cta}`}>
                                                 {posting ? 'Posting...' : 'Post'}

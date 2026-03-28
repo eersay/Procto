@@ -7,6 +7,7 @@ import {
   deleteQuestion,
   importQuestions,
 } from '../controllers/question.controller';
+import { generateQuestionsWithAI } from '../controllers/aiQuestion.controller';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -16,9 +17,10 @@ router.use(authenticate);
 
 // Faculty only routes
 router.post('/', authorize(['FACULTY', 'ADMIN']), createQuestion);
+router.post('/ai-generate', authorize(['FACULTY', 'ADMIN']), generateQuestionsWithAI);
+router.post('/import', authorize(['FACULTY', 'ADMIN']), importQuestions);
 router.put('/:id', authorize(['FACULTY', 'ADMIN']), updateQuestion);
 router.delete('/:id', authorize(['FACULTY', 'ADMIN']), deleteQuestion);
-router.post('/import', authorize(['FACULTY', 'ADMIN']), importQuestions);
 
 // Shared routes (faculty can see all, students only see in exam context)
 router.get('/', getQuestions);

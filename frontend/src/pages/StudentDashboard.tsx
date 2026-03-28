@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sun, Moon } from 'lucide-react';
 import { api } from '../lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import NotificationBell from '../components/NotificationBell';
+import { useTheme } from '../hooks/useTheme';
 
 interface Course {
   id: string; name: string; code: string; description: string | null;
@@ -23,6 +25,7 @@ interface CompletedExam {
 }
 
 export default function StudentDashboard() {
+  const { theme, toggleTheme } = useTheme();
   const [user, setUser] = useState<any>(null);
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
@@ -84,9 +87,27 @@ export default function StudentDashboard() {
 
   const getExamStatus = (exam: Exam) => {
     const now = new Date(), start = new Date(exam.startAt), end = new Date(exam.endAt);
-    if (now < start) return { label: 'UPCOMING', canTake: false, color: 'text-blue-400 border-blue-400/40 bg-blue-400/10' };
-    if (now >= start && now <= end) return { label: 'LIVE', canTake: true, color: 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10' };
-    return { label: 'ENDED', canTake: false, color: 'text-neutral-500 border-neutral-700 bg-neutral-800/40' };
+    if (now < start) return {
+      label: 'UPCOMING',
+      canTake: false,
+      color: theme === 'light'
+        ? 'text-blue-700 border-blue-300 bg-blue-50'
+        : 'text-blue-400 border-blue-400/40 bg-blue-400/10',
+    };
+    if (now >= start && now <= end) return {
+      label: 'LIVE',
+      canTake: true,
+      color: theme === 'light'
+        ? 'text-emerald-700 border-emerald-300 bg-emerald-50'
+        : 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10',
+    };
+    return {
+      label: 'ENDED',
+      canTake: false,
+      color: theme === 'light'
+        ? 'text-slate-600 border-slate-300 bg-slate-100'
+        : 'text-neutral-500 border-neutral-700 bg-neutral-800/40',
+    };
   };
 
   const getInitials = () => {
@@ -101,7 +122,7 @@ export default function StudentDashboard() {
   };
 
   if (!user) return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+    <div className={`min-h-screen flex items-center justify-center ${theme === 'light' ? 'bg-slate-50' : 'bg-neutral-950'}`}>
       <div className="animate-spin h-8 w-8 border-2 border-emerald-400 border-t-transparent rounded-full" />
     </div>
   );
@@ -109,8 +130,15 @@ export default function StudentDashboard() {
   const activeExam = upcomingExams.find(e => getExamStatus(e).canTake);
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white">
-      <Toaster position="top-right" toastOptions={{ style: { background: '#171717', color: '#fff', border: '1px solid #374151' } }} />
+    <main className={`min-h-screen ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-neutral-950 text-white'}`}>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: theme === 'light'
+            ? { background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1' }
+            : { background: '#171717', color: '#fff', border: '1px solid #374151' },
+        }}
+      />
 
       {/* Ambient Glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -121,53 +149,69 @@ export default function StudentDashboard() {
 
       {/* Carbon fibre pattern */}
       <div className="pointer-events-none fixed inset-0 opacity-[0.025]"
-        style={{ backgroundImage: `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,0.04) 2px,rgba(255,255,255,0.04) 4px)` }} />
+        style={{
+          backgroundImage: theme === 'light'
+            ? `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(15,23,42,0.05) 2px,rgba(15,23,42,0.05) 4px)`
+            : `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,0.04) 2px,rgba(255,255,255,0.04) 4px)`,
+        }}
+      />
 
       <div className="relative mx-auto flex min-h-screen w-full flex-col px-6 py-8 sm:px-8 lg:px-12 xl:px-20 xl:py-12">
 
         {/* ── HEADER ── */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-900 ring-1 ring-emerald-500/40 shadow-lg shadow-emerald-500/20">
+            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ring-emerald-500/40 shadow-lg shadow-emerald-500/20 ${theme === 'light' ? 'bg-white' : 'bg-neutral-900'}`}>
               <span className="text-lg font-semibold tracking-tight text-emerald-400">P</span>
             </div>
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold uppercase tracking-[0.18em] text-neutral-400">Procto</span>
-              <span className="text-xs text-neutral-600">Student Portal</span>
+              <span className={`text-sm font-semibold uppercase tracking-[0.18em] ${theme === 'light' ? 'text-slate-600' : 'text-neutral-400'}`}>Procto</span>
+              <span className={`text-xs ${theme === 'light' ? 'text-slate-500' : 'text-neutral-600'}`}>Student Portal</span>
             </div>
           </div>
 
           {/* Notification Bell + Profile dropdown */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg border transition-all ${
+                theme === 'light'
+                  ? 'bg-white border-slate-300 text-slate-600 hover:text-emerald-600'
+                  : 'bg-neutral-900/70 border-neutral-700/60 text-neutral-400 hover:text-emerald-400'
+              }`}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <NotificationBell />
 
             {/* Profile dropdown */}
             <div className="relative group">
-              <button className="flex items-center gap-3 rounded-full border border-neutral-700/60 bg-neutral-900/70 px-3 py-1.5 hover:border-emerald-400/40 transition-all duration-300">
+              <button className={`flex items-center gap-3 rounded-full border px-3 py-1.5 hover:border-emerald-400/40 transition-all duration-300 ${theme === 'light' ? 'border-slate-300 bg-white' : 'border-neutral-700/60 bg-neutral-900/70'}`}>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-semibold text-sm">
                   {getInitials()}
                 </div>
                 <div className="hidden sm:flex flex-col items-start leading-tight">
-                  <span className="text-sm font-medium text-neutral-200">{getDisplayName()}</span>
-                  <span className="text-[0.65rem] text-neutral-500">Student</span>
+                  <span className={`text-sm font-medium ${theme === 'light' ? 'text-slate-800' : 'text-neutral-200'}`}>{getDisplayName()}</span>
+                  <span className={`text-[0.65rem] ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>Student</span>
                 </div>
-                <svg className="w-4 h-4 text-neutral-400 group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 group-hover:text-emerald-400 transition-colors ${theme === 'light' ? 'text-slate-500' : 'text-neutral-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
               <div className="absolute right-0 mt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <div className="rounded-xl border border-neutral-700/60 bg-neutral-900/95 backdrop-blur-xl shadow-xl p-2">
+                <div className={`rounded-xl border backdrop-blur-xl shadow-xl p-2 ${theme === 'light' ? 'border-slate-300 bg-white/95' : 'border-neutral-700/60 bg-neutral-900/95'}`}>
                   <button onClick={() => navigate('/my-courses')}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-300 rounded-lg hover:bg-neutral-800/60 hover:text-emerald-400 transition-colors">
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:text-emerald-400 transition-colors ${theme === 'light' ? 'text-slate-700 hover:bg-slate-100' : 'text-neutral-300 hover:bg-neutral-800/60'}`}>
                     📚 My Courses
                   </button>
                   <button onClick={() => navigate('/my-results')}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-300 rounded-lg hover:bg-neutral-800/60 hover:text-emerald-400 transition-colors">
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:text-emerald-400 transition-colors ${theme === 'light' ? 'text-slate-700 hover:bg-slate-100' : 'text-neutral-300 hover:bg-neutral-800/60'}`}>
                     📊 My Results
                   </button>
                   {user?.email && (
-                    <div className="px-3 py-2 text-xs text-neutral-500 truncate border-t border-neutral-700/60 mt-1 pt-2">
+                    <div className={`px-3 py-2 text-xs truncate border-t mt-1 pt-2 ${theme === 'light' ? 'text-slate-500 border-slate-300' : 'text-neutral-500 border-neutral-700/60'}`}>
                       {user.email}
                     </div>
                   )}
@@ -190,19 +234,19 @@ export default function StudentDashboard() {
 
             {/* Left: Text */}
             <div className="flex w-full flex-1 flex-col justify-center">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/70 px-3 py-1 text-xs text-neutral-400 shadow-sm backdrop-blur">
+              <div className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs shadow-sm backdrop-blur ${theme === 'light' ? 'border-slate-300 bg-white text-slate-600' : 'border-neutral-800 bg-neutral-900/70 text-neutral-400'}`}>
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
                 High-Performance Exam Environment
               </div>
 
-              <h1 className="mt-6 text-5xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
+              <h1 className={`mt-6 text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                 Focus.{' '}
                 <span className="text-emerald-400">Speed.</span>{' '}
                 <br className="hidden sm:block" />
                 Integrity.
               </h1>
 
-              <p className="mt-5 max-w-xl text-base text-neutral-400 sm:text-lg">
+              <p className={`mt-5 max-w-xl text-base sm:text-lg ${theme === 'light' ? 'text-slate-600' : 'text-neutral-400'}`}>
                 Join your exam session instantly. No distractions, just performance. Your path to success starts here.
               </p>
 
@@ -221,12 +265,12 @@ export default function StudentDashboard() {
                   </button>
                 )}
                 <button onClick={() => navigate('/my-results')}
-                  className="inline-flex items-center gap-2 rounded-full border border-neutral-700 px-6 py-3.5 text-sm text-neutral-300 hover:border-emerald-400/50 hover:text-emerald-400 transition-all">
+                  className={`inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-sm hover:border-emerald-400/50 hover:text-emerald-400 transition-all ${theme === 'light' ? 'border-slate-300 text-slate-700 bg-white' : 'border-neutral-700 text-neutral-300'}`}>
                   View Results
                 </button>
               </div>
 
-              <div className="mt-8 flex flex-wrap gap-6 text-xs text-neutral-500 sm:text-sm">
+              <div className={`mt-8 flex flex-wrap gap-6 text-xs sm:text-sm ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>
                 {[
                   { label: `${enrolledCourses.length} Enrolled Courses` },
                   { label: `${upcomingExams.length} Upcoming Exams` },
@@ -244,9 +288,9 @@ export default function StudentDashboard() {
             <div className="flex w-full flex-1 items-center justify-center">
               <div className="relative w-full max-w-md lg:max-w-xl">
                 <div className="absolute -inset-1 rounded-3xl bg-gradient-to-tr from-emerald-500/30 via-emerald-500/10 to-emerald-500/30 opacity-60 blur-xl" />
-                <div className="relative rounded-3xl border border-emerald-500/30 bg-neutral-900/90 p-6 shadow-2xl backdrop-blur-xl sm:p-7">
+                <div className={`relative rounded-3xl border border-emerald-500/30 p-6 shadow-2xl backdrop-blur-xl sm:p-7 ${theme === 'light' ? 'bg-white/95' : 'bg-neutral-900/90'}`}>
                   <div className="flex items-center justify-between text-xs mb-5">
-                    <span className="uppercase tracking-[0.16em] text-neutral-500">Student Hub</span>
+                    <span className={`uppercase tracking-[0.16em] ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>Student Hub</span>
                     <span className="flex items-center gap-1.5 text-emerald-400">
                       <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] animate-pulse" />
                       Online
@@ -287,15 +331,15 @@ export default function StudentDashboard() {
                       },
                     ].map(({ icon, title, sub, action }) => (
                       <button key={title} onClick={action}
-                        className="w-full flex items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-950/60 p-4 hover:border-emerald-500/50 hover:bg-neutral-900/80 transition-all group text-left">
+                        className={`w-full flex items-center gap-4 rounded-xl border p-4 hover:border-emerald-500/50 transition-all group text-left ${theme === 'light' ? 'border-slate-200 bg-slate-50 hover:bg-white' : 'border-neutral-800 bg-neutral-950/60 hover:bg-neutral-900/80'}`}>
                         <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors flex-shrink-0">
                           {icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors truncate">{title}</p>
-                          <p className="text-xs text-neutral-500 truncate">{sub}</p>
+                          <p className={`text-sm font-semibold group-hover:text-emerald-400 transition-colors truncate ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{title}</p>
+                          <p className={`text-xs truncate ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>{sub}</p>
                         </div>
-                        <svg className="w-5 h-5 text-neutral-600 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className={`w-5 h-5 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all flex-shrink-0 ${theme === 'light' ? 'text-slate-400' : 'text-neutral-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
@@ -310,27 +354,27 @@ export default function StudentDashboard() {
         {/* ── UPCOMING EXAMS ── */}
         {upcomingExams.length > 0 && (
           <section className="mt-20">
-            <h2 className="text-2xl font-bold mb-6 text-white">Upcoming Exams</h2>
+            <h2 className={`text-2xl font-bold mb-6 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Upcoming Exams</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {upcomingExams.map(exam => {
                 const status = getExamStatus(exam);
                 return (
                   <div key={exam.id}
-                    className="group relative rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all backdrop-blur-sm">
+                    className={`group relative rounded-2xl border p-5 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all backdrop-blur-sm ${theme === 'light' ? 'border-slate-200 bg-white/90' : 'border-neutral-800 bg-neutral-900/60'}`}>
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-white truncate">{exam.title}</h4>
-                        <p className="text-xs text-neutral-500 mt-0.5">{exam.course.name}</p>
+                        <h4 className={`font-semibold truncate ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{exam.title}</h4>
+                        <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>{exam.course.name}</p>
                       </div>
                       <span className={`ml-2 flex-shrink-0 text-xs px-2 py-0.5 rounded-full border font-medium ${status.color}`}>
                         {status.label}
                       </span>
                     </div>
-                    <div className="flex gap-4 text-xs text-neutral-500 mb-4">
+                    <div className={`flex gap-4 text-xs mb-4 ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>
                       <span>⏱ {exam.durationMinutes} min</span>
                       <span>📝 {exam._count.examQuestions} questions</span>
                     </div>
-                    <div className="text-xs text-neutral-600 mb-4">
+                    <div className={`text-xs mb-4 ${theme === 'light' ? 'text-slate-500' : 'text-neutral-600'}`}>
                       <div>Start: {new Date(exam.startAt).toLocaleString()}</div>
                     </div>
                     {status.canTake ? (
@@ -354,7 +398,7 @@ export default function StudentDashboard() {
         {completedExams.length > 0 && (
           <section className="mt-16">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Recent Results</h2>
+               <h2 className={`text-2xl font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Recent Results</h2>
               <button onClick={() => navigate('/my-results')}
                 className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors">
                 View All →
@@ -363,9 +407,9 @@ export default function StudentDashboard() {
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {completedExams.slice(0, 4).map(session => (
                 <button key={session.id} onClick={() => navigate(`/result/${session.id}`)}
-                  className="group rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all text-left">
-                  <h4 className="font-semibold text-white text-sm mb-1 truncate">{session.exam.title}</h4>
-                  <p className="text-xs text-neutral-500 mb-4 truncate">{session.exam.course.name}</p>
+                  className={`group rounded-2xl border p-5 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all text-left ${theme === 'light' ? 'border-slate-200 bg-white/90' : 'border-neutral-800 bg-neutral-900/60'}`}>
+                  <h4 className={`font-semibold text-sm mb-1 truncate ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{session.exam.title}</h4>
+                  <p className={`text-xs mb-4 truncate ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>{session.exam.course.name}</p>
                   {session.result ? (
                     <>
                       <div className={`text-3xl font-bold mb-1 ${session.result.passStatus ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -389,10 +433,10 @@ export default function StudentDashboard() {
         {/* ── FEATURE GRID ── */}
         <section className="mt-20 mb-12">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
+            <h2 className={`text-3xl font-bold sm:text-4xl ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
               Built for <span className="text-emerald-400">Performance</span>
             </h2>
-            <p className="mt-3 text-neutral-500 max-w-2xl mx-auto">
+            <p className={`mt-3 max-w-2xl mx-auto ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>
               Everything you need for a seamless, focused exam experience.
             </p>
           </div>
@@ -403,14 +447,14 @@ export default function StudentDashboard() {
               { icon: '⚡', title: 'Instant Results', desc: 'Get your performance analytics immediately after submission with detailed score breakdown.' },
             ].map(({ icon, title, desc }) => (
               <div key={title}
-                className="group relative rounded-2xl border border-emerald-500/30 bg-neutral-900/60 p-6 backdrop-blur-sm hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+                className={`group relative rounded-2xl border border-emerald-500/30 p-6 backdrop-blur-sm hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 ${theme === 'light' ? 'bg-white/90' : 'bg-neutral-900/60'}`}>
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative">
                   <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-4 group-hover:bg-emerald-500/20 transition-colors text-2xl">
                     {icon}
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-                  <p className="text-sm text-neutral-500">{desc}</p>
+                  <h3 className={`text-lg font-semibold mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{title}</h3>
+                  <p className={`text-sm ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>{desc}</p>
                 </div>
               </div>
             ))}
@@ -418,7 +462,7 @@ export default function StudentDashboard() {
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="mt-8 flex items-center justify-between border-t border-neutral-800 pt-4 text-[0.7rem] text-neutral-600 sm:text-xs">
+        <footer className={`mt-8 flex items-center justify-between border-t pt-4 text-[0.7rem] sm:text-xs ${theme === 'light' ? 'border-slate-300 text-slate-500' : 'border-neutral-800 text-neutral-600'}`}>
           <span>© {new Date().getFullYear()} Procto. Built for secure online exams.</span>
           <span className="hidden sm:inline">Designed for performance · React · TypeScript</span>
         </footer>
@@ -426,15 +470,15 @@ export default function StudentDashboard() {
 
       {/* ── ENROLL MODAL ── */}
       {showEnrollModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="relative rounded-2xl border border-neutral-700/60 bg-neutral-900/95 backdrop-blur-xl w-full max-w-md p-8 shadow-2xl">
+        <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50 ${theme === 'light' ? 'bg-slate-900/40' : 'bg-black/70'}`}>
+          <div className={`relative rounded-2xl border backdrop-blur-xl w-full max-w-md p-8 shadow-2xl ${theme === 'light' ? 'border-slate-300 bg-white/95' : 'border-neutral-700/60 bg-neutral-900/95'}`}>
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="text-xl font-bold text-white">Join Classroom</h3>
-                <p className="text-sm text-neutral-500 mt-0.5">Enter the code from your instructor</p>
+                <h3 className={`text-xl font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Join Classroom</h3>
+                <p className={`text-sm mt-0.5 ${theme === 'light' ? 'text-slate-500' : 'text-neutral-500'}`}>Enter the code from your instructor</p>
               </div>
               <button onClick={() => { setShowEnrollModal(false); setCourseCode(''); }}
-                className="text-neutral-500 hover:text-white transition-colors text-2xl leading-none">
+                className={`transition-colors text-2xl leading-none ${theme === 'light' ? 'text-slate-500 hover:text-slate-900' : 'text-neutral-500 hover:text-white'}`}>
                 ×
               </button>
             </div>
@@ -443,7 +487,11 @@ export default function StudentDashboard() {
                 type="text"
                 value={courseCode}
                 onChange={e => setCourseCode(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 rounded-xl border border-neutral-700 bg-neutral-950 text-white text-center font-mono text-lg tracking-widest placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition"
+                className={`w-full px-4 py-3 rounded-xl border text-center font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition ${
+                  theme === 'light'
+                    ? 'border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400'
+                    : 'border-neutral-700 bg-neutral-950 text-white placeholder:text-neutral-600'
+                }`}
                 placeholder="ABC-DEFG-HIJ"
                 maxLength={20}
                 required
@@ -452,7 +500,7 @@ export default function StudentDashboard() {
               <div className="flex gap-3 pt-2">
                 <button type="button"
                   onClick={() => { setShowEnrollModal(false); setCourseCode(''); }}
-                  className="flex-1 py-3 rounded-xl border border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500 transition">
+                  className={`flex-1 py-3 rounded-xl border transition ${theme === 'light' ? 'border-slate-300 text-slate-600 hover:text-slate-900 hover:border-slate-400' : 'border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500'}`}>
                   Cancel
                 </button>
                 <button type="submit" disabled={loading || !courseCode}

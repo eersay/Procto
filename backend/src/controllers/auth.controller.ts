@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
@@ -61,13 +61,13 @@ export const register = async (req: Request, res: Response) => {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h' }
+      { expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '24h') as any }
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+      { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any }
     );
 
     // Store refresh token hash in database
@@ -136,13 +136,13 @@ export const login = async (req: Request, res: Response) => {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h' }
+      { expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '24h') as any }
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+      { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any }
     );
 
     // Store refresh token
@@ -224,7 +224,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h' }
+      { expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '24h') as any }
     );
 
     res.json({ accessToken });
@@ -247,14 +247,14 @@ export const googleCallback = async (req: Request, res: Response) => {
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h' }
+      { expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '24h') as any }
     );
     console.log('[google/callback] accessToken generated, length:', accessToken.length);
 
     const refreshTokenValue = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+      { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any }
     );
 
     const refreshTokenHash = await bcrypt.hash(refreshTokenValue, 10);
