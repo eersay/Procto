@@ -1,7 +1,9 @@
 {
   "name": "procto-backend",
   "version": "1.0.0",
-  "description": "PROCTO Online Proctoring System - Backend API",
+  "description": "Procto Online Proctoring System - Backend API",
+  "author": "Bhagyasree Roy",
+  "license": "UNLICENSED",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",

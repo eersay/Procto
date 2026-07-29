@@ -1,3 +1,8 @@
+/**
+ * Procto — AI-powered online exam proctoring system
+ * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
+ */
+
 import { Prisma, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

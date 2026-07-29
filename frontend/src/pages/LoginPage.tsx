@@ -1,3 +1,8 @@
+/**
+ * Procto — AI-powered online exam proctoring system
+ * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sun, Moon } from 'lucide-react';

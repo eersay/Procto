@@ -1,3 +1,8 @@
+/**
+ * Procto — AI-powered online exam proctoring system
+ * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
+ */
+
 import passport from 'passport';
 import { Strategy as GoogleStrategy, Profile } from 'passport-google-oauth20';
 import { PrismaClient } from '@prisma/client';

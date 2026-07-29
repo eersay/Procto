@@ -1,291 +1,577 @@
+PROCTO — SOURCE CODE
+Author: Bhagyasree Roy
+Total pages: 200
+======================================================================
+--- PAGE 1 of 200 ---
+
+// ===== FILE: backend/prisma/schema.prisma =====
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  FACULTY
+  ADMIN
+}
+
+enum ExamStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum SessionStatus {
+  PENDING
+  ACTIVE
+  SUBMITTED
+  TERMINATED
+  INVALIDATED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  MULTIPLE_SELECT
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  FILL_BLANK
+  NUMERICAL
+  CODE
+}
+
+enum EventType {
+  FACE_NOT_DETECTED
+  MULTIPLE_FACES
+  LOOKING_AWAY
+  TAB_SWITCH
+  WINDOW_BLUR
+  WEBCAM_DENIED
+  NOISE_DETECTED
+--- PAGE 2 of 200 ---
+
+  SCREEN_EXIT
+  COPY_PASTE
+  RIGHT_CLICK
+}
+
+enum EventSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  passwordHash      String?
+  googleId          String?  @unique
+  role              UserRole
+  firstName         String
+  lastName          String
+  profilePhotoUrl   String?
+  mfaSecret         String?
+  isVerified        Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
+  coursesFaculty    Course[]        @relation("FacultyCourses")
+  enrollments       Enrollment[]
+  examSessions      ExamSession[]
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+  announcements     Announcement[]  @relation("AuthoredAnnouncements")
+  notifications     Notification[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Course {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  name        String
+  description String?
+  facultyId   String
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relations
+  faculty       User           @relation("FacultyCourses", fields: [facultyId], references: [id])
+  enrollments   Enrollment[]
+--- PAGE 3 of 200 ---
+
+  exams         Exam[]
+  questions     Question[]
+  announcements Announcement[]
+
+  @@index([facultyId])
+  @@index([code])
+}
+
+model Enrollment {
+  id         String    @id @default(uuid())
+  courseId   String
+  studentId  String
+  enrolledAt DateTime  @default(now())
+  droppedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  course  Course @relation(fields: [courseId], references: [id])
+  student User   @relation(fields: [studentId], references: [id])
+
+  @@unique([courseId, studentId])
+  @@index([studentId])
+  @@index([courseId])
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  courseId  String
+  authorId  String
+  title     String
+  body      String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author User   @relation("AuthoredAnnouncements", fields: [authorId], references: [id])
+
+  @@index([courseId])
+}
+
+model Exam {
+  id               String     @id @default(uuid())
+  courseId         String
+  title            String
+  instructions     String?
+  durationMinutes  Int
+  startAt          DateTime
+  endAt            DateTime
+  proctoringLevel  String     @default("STANDARD")
+  status           ExamStatus @default(DRAFT)
+  isPublished      Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+--- PAGE 4 of 200 ---
+
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
+
+  // Relations
+  course          Course          @relation(fields: [courseId], references: [id])
+  examQuestions   ExamQuestion[]
+  examSessions    ExamSession[]
+  examRules       ExamRules?
+
+  @@index([courseId])
+  @@index([status])
+  @@index([startAt])
+}
+
+model ExamRules {
+  id                    String  @id @default(uuid())
+  examId                String  @unique
+  shuffleQuestions      Boolean @default(true)
+  shuffleChoices        Boolean @default(true)
+  maxAttempts           Int     @default(1)
+  negativeMarkingFactor Float   @default(0)
+  passThreshold         Float   @default(60)
+  allowCalculator       Boolean @default(false)
+  allowFormulaSheet     Boolean @default(false)
+
+  // Relations
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id         String       @id @default(uuid())
+  courseId   String
+  type       QuestionType
+  content    Json
+  points     Float
+  difficulty String?
+  topicTags  String[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  deletedAt  DateTime?
+
+  // Relations
+  course        Course         @relation(fields: [courseId], references: [id])
+  examQuestions ExamQuestion[]
+  answers       Answer[]
+
+  @@index([courseId])
+  @@index([type])
+}
+
+model ExamQuestion {
+  id         String @id @default(uuid())
+  examId     String
+  questionId String
+  orderIndex Int
+--- PAGE 5 of 200 ---
+
+
+  // Relations
+  exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([examId, questionId])
+  @@index([examId])
+}
+
+model ExamSession {
+  id          String        @id @default(uuid())
+  examId      String
+  studentId   String
+  startedAt   DateTime      @default(now())
+  submittedAt DateTime?
+  status      SessionStatus @default(PENDING)
+  ipAddress   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  exam             Exam              @relation(fields: [examId], references: [id])
+  student          User              @relation(fields: [studentId], references: [id])
+  answers          Answer[]
+  suspiciousEvents SuspiciousEvent[]
+  result           Result?
+
+  @@index([examId])
+  @@index([studentId])
+  @@index([status])
+}
+
+model Answer {
+  id          String   @id @default(uuid())
+  sessionId   String
+  questionId  String
+  response    Json
+  autoScore   Float?
+  manualScore Float?
+  gradedBy    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  session  ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+}
+
+model SuspiciousEvent {
+  id            String        @id @default(uuid())
+  sessionId     String
+  type          EventType
+--- PAGE 6 of 200 ---
+
+  severity      EventSeverity
+  screenshotUrl String?
+  timestamp     DateTime      @default(now())
+  dismissedBy   String?
+
+  // Relations
+  session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([severity])
+}
+
+model Result {
+  id          String   @id @default(uuid())
+  sessionId   String   @unique
+  totalScore  Float
+  percentage  Float
+  rank        Int?
+  percentile  Float?
+  passStatus  Boolean
+  isPublished Boolean  @default(false)
+  finalizedAt DateTime?
+
+  // Relations
+  session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String
+  action       String
+  resourceType String
+  resourceId   String?
+  ipAddress    String?
+  timestamp    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+--- PAGE 7 of 200 ---
+
+  @@index([timestamp])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   @default("ANNOUNCEMENT")
+  title       String
+  body        String
+  referenceId String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ===== FILE: backend/src/controllers/aiQuestion.controller.ts =====
+
 /**
  * Procto — AI-powered online exam proctoring system
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
-import { useCallback, useEffect, useState, useRef } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { api } from '../lib/api';
-import toast, { Toaster } from 'react-hot-toast';
-import { useFaceDetection, type FaceDetectionStatus } from '../lib/useFaceDetection';
+import { Response } from 'express';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
+import { AuthRequest } from '../middleware/auth.middleware';
+import { handleError } from '../utils/errors';
 
-interface Question {
-  id: string;
-  orderIndex: number;
-  question: {
-    id: string;
-    type: string;
-    content: any;
-    points: number;
+const prisma = new PrismaClient();
+
+const generateSchema = z.object({
+  courseId: z.string().uuid(),
+  topic: z.string().min(2).max(200),
+  count: z.number().int().min(1).max(20),
+  questionTypes: z
+    .array(
+      z.enum([
+        'MULTIPLE_CHOICE',
+        'MULTIPLE_SELECT',
+        'TRUE_FALSE',
+        'SHORT_ANSWER',
+        'FILL_BLANK',
+        'NUMERICAL',
+      ])
+    )
+    .min(1),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+--- PAGE 8 of 200 ---
+
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildPrompt(
+  topic: string,
+  count: number,
+  questionTypes: string[],
+  difficulty: string
+): string {
+  const typeDescriptions: Record<string, string> = {
+    MULTIPLE_CHOICE:
+      'Multiple choice (exactly 4 options, exactly one correct answer stored in correctAnswer as a string)',
+    MULTIPLE_SELECT:
+      'Multiple select (4-5 options, 2-3 correct answers stored in correctAnswer as a JSON array of strings)',
+    TRUE_FALSE:
+      'True or False (no options array, correctAnswer must be exactly "true" or "false")',
+    SHORT_ANSWER:
+      'Short answer (no options array, correctAnswer is a concise 1-3 word answer)',
+    FILL_BLANK:
+      'Fill in the blank (the question text contains a blank shown as ___, correctAnswer is the word or phrase that fills it)',
+    NUMERICAL:
+      'Numerical (correctAnswer is a number stored as a string, optionally include tolerance)',
+  };
+
+  const typesText = questionTypes
+    .map((t) => `- ${typeDescriptions[t] || t}`)
+    .join('\n');
+
+  return `You are an expert educator. Generate exactly ${count} exam question(s) about the topic: "${topic}".
+
+Difficulty level: ${difficulty}
+
+Use ONLY these question types (mix them if multiple are listed):
+${typesText}
+
+Return ONLY a valid JSON array with no markdown, no code fences, no extra text. Each element must have this exact shape:
+
+{
+  "type": "<TYPE>",            // one of the allowed types above, in SCREAMING_SNAKE_CASE
+  "content": {
+    "question": "<string>",    // the question text
+    "options": ["<string>"],   // REQUIRED for MULTIPLE_CHOICE and MULTIPLE_SELECT; omit for others
+    "correctAnswer": "<string | string[]>",
+    "explanation": "<string>"  // a brief explanation of the correct answer
+  },
+  "points": <number>,          // EASY=1, MEDIUM=2, HARD=3
+  "difficulty": "${difficulty}",
+  "topicTags": ["<string>"]    // 1-3 relevant tags
+}
+
+Rules:
+- For MULTIPLE_CHOICE always include exactly 4 options and correctAnswer as a plain string matching one option exactly.
+- For MULTIPLE_SELECT always include 4+ options and correctAnswer as a JSON array.
+- For TRUE_FALSE correctAnswer must be "true" or "false" (lowercase string), no options array.
+- Do NOT include any text outside the JSON array.
+--- PAGE 9 of 200 ---
+
+- Ensure all JSON is valid and parseable.`;
+}
+
+function sanitizeGeneratedQuestion(q: any, courseId: string) {
+  // Map type aliases the model might return
+  const validTypes = new Set([
+    'MULTIPLE_CHOICE',
+    'MULTIPLE_SELECT',
+    'TRUE_FALSE',
+    'SHORT_ANSWER',
+    'FILL_BLANK',
+    'NUMERICAL',
+  ]);
+
+  const type = (q.type ?? '').toString().toUpperCase().replace(/ /g, '_');
+  if (!validTypes.has(type)) return null;
+
+  const content = q.content ?? {};
+  if (!content.question || typeof content.question !== 'string') return null;
+
+  // Normalise correctAnswer for TRUE_FALSE
+  if (type === 'TRUE_FALSE') {
+    const ca = (content.correctAnswer ?? '').toString().toLowerCase().trim();
+    if (ca !== 'true' && ca !== 'false') return null;
+    content.correctAnswer = ca;
+    delete content.options;
+  }
+
+  return {
+    courseId,
+    type,
+    content: {
+      question: content.question.trim(),
+      options: Array.isArray(content.options)
+        ? (content.options as string[]).map((o: string) => o.trim())
+        : undefined,
+      correctAnswer: content.correctAnswer,
+      explanation: content.explanation ?? '',
+    },
+    points:
+      typeof q.points === 'number' && q.points > 0 ? q.points : 1,
+    difficulty: ['EASY', 'MEDIUM', 'HARD'].includes(q.difficulty)
+      ? q.difficulty
+      : 'MEDIUM',
+    topicTags: Array.isArray(q.topicTags)
+      ? (q.topicTags as string[]).slice(0, 5)
+      : [],
   };
 }
 
-interface Exam {
-  id: string;
-  title: string;
-  instructions: string | null;
-  durationMinutes: number;
-  startAt: string;
-  endAt: string;
-  course: {
-    name: string;
-  };
-  examQuestions: Question[];
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Controller
+// ─────────────────────────────────────────────────────────────────────────────
 
-export default function TakeExamPage() {
-  const { examId } = useParams<{ examId: string }>();
-  const location = useLocation();
-  const [exam, setExam] = useState<Exam | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [timeRemaining, setTimeRemaining] = useState(0);
-  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const submittedRef = useRef(false); // mirror of submitted for use inside closures
-  const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
-  const [suspiciousEvents, setSuspiciousEvents] = useState<string[]>([]);
-  const [faceStatus, setFaceStatus] = useState<FaceDetectionStatus>({
-    faceCount: 0,
-    modelLoaded: false,
-    lastViolation: null,
-  });
-  const [faceWarning, setFaceWarning] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const captureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Ref so event handlers always read the current sessionId (avoids stale closure)
-  const sessionIdRef = useRef<string | null>(null);
-  // Queue for events that fire before session has started (race condition fix)
-  const pendingEventsRef = useRef<Array<{ type: string; description: string }>>([]);
-  // Guard against React StrictMode double-invoking the session-init effect
-  const startedRef = useRef(false);
-  // Stable refs for event handlers — prevents stale-closure issues across re-renders
-  const visibilityHandlerRef = useRef<() => void>(() => { });
-  const blurHandlerRef = useRef<() => void>(() => { });
-  // Debounce WINDOW_BLUR so rapid OS-level focus changes don't flood events
-  const lastBlurRef = useRef<number>(0);
+export const generateQuestionsWithAI = async (
+--- PAGE 10 of 200 ---
 
-  // ── AI Face Detection ─────────────────────────────────────────────────────
-  // onViolation MUST be stable (useCallback) — TakeExamPage re-renders every
-  // second due to the timer countdown. An inline arrow would be recreated each
-  // render, making the inference useEffect restart its interval every second
-  // so it never actually fires.
-  const handleFaceViolation = useCallback((type: string, description: string) => {
-    logSuspiciousEvent(type, description);
-    const messages: Record<string, string> = {
-      FACE_NOT_DETECTED: '⚠️ No face detected! Please stay visible.',
-      MULTIPLE_FACES: '🚨 Multiple faces detected! Only you should be visible.',
-      LOOKING_AWAY: '👀 Please keep your eyes on the screen.',
-    };
-    const msg = messages[type] || '⚠️ Proctoring violation detected.';
-    setFaceWarning(msg);
-    toast.error(msg, { id: type, duration: 5000 });
-    setTimeout(() => setFaceWarning(null), 8000);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // empty deps — logSuspiciousEvent uses a ref internally so it's stable
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    // Validate input
+    const data = generateSchema.parse(req.body);
 
-  useFaceDetection({
-    videoRef,
-    enabled: !!sessionId && !!webcamStream && !submitted,
-    onViolation: handleFaceViolation,
-    onStatusChange: setFaceStatus,
-    intervalMs: 3000,
-    cooldownMs: 10_000,
-  });
-
-  // ── EFFECT 1: stable event listener registration (separate from session init)
-  // Using stable wrapper refs means React StrictMode double-cleanup never kills the listeners.
-  useEffect(() => {
-    const onVisibilityChange = () => visibilityHandlerRef.current();
-    const onWindowBlur = () => blurHandlerRef.current();
-
-    // Block tab close / page refresh
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (submittedRef.current) return;
-      e.preventDefault();
-      e.returnValue = 'Your exam is in progress. Leaving will be flagged as a violation!';
-      return e.returnValue;
-    };
-
-    // Auto-terminate via sendBeacon when page actually unloads (fire-and-forget)
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
-    const onPageHide = () => {
-      const sid = sessionIdRef.current;
-      if (!sid || submittedRef.current) return;
-      const token = localStorage.getItem('accessToken') || '';
-      const blob = new Blob([JSON.stringify({ token })], { type: 'application/json' });
-      navigator.sendBeacon(`${API_BASE}/exam-sessions/${sid}/terminate`, blob);
-    };
-
-    // Intercept browser Back button — push a dummy state so popstate fires
-    // instead of actually navigating away (works with BrowserRouter)
-    window.history.pushState(null, '', window.location.href);
-    const onPopState = () => {
-      if (submittedRef.current) return;
-      // Re-push so they can't keep pressing Back
-      window.history.pushState(null, '', window.location.href);
-      toast.error('⚠️ You cannot leave during an exam!', { id: 'back-blocked' });
-    };
-
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('blur', onWindowBlur);
-    window.addEventListener('beforeunload', onBeforeUnload);
-    window.addEventListener('pagehide', onPageHide);
-    window.addEventListener('popstate', onPopState);
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('blur', onWindowBlur);
-      window.removeEventListener('beforeunload', onBeforeUnload);
-      window.removeEventListener('pagehide', onPageHide);
-      window.removeEventListener('popstate', onPopState);
-    };
-  }, []); // Empty deps — runs once regardless of StrictMode
-
-  // ── EFFECT 2: one-time session + webcam init (guarded against StrictMode double-fire)
-  useEffect(() => {
-    if (!examId) return;
-    if (startedRef.current) return;
-    startedRef.current = true;
-
-    // Get webcam stream from location state or request new one
-    const stream = location.state?.webcamStream;
-    if (stream) {
-      setWebcamStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+    // Verify faculty owns the course
+    if (req.user!.role === 'FACULTY') {
+      const course = await prisma.course.findUnique({
+        where: { id: data.courseId, facultyId: req.user!.userId },
+      });
+      if (!course) {
+        return res
+          .status(403)
+          .json({ error: 'Not authorized for this course' });
       }
-    } else {
-      requestWebcam();
     }
 
-    loadExamAndStartSession();
-
-    return () => {
-      if (captureIntervalRef.current) {
-        clearInterval(captureIntervalRef.current);
-      }
-    };
-  }, [examId]);
-
-  useEffect(() => {
-    if (timeRemaining <= 0) return;
-
-    const timer = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeRemaining]);
-
-  useEffect(() => {
-    if (!sessionId) return;
-
-    const autoSave = setInterval(() => {
-      saveAnswers();
-    }, 30000);
-
-    return () => clearInterval(autoSave);
-  }, [sessionId, answers]);
-
-  // ── KEY FIX: assign stream to video element AFTER React renders it ──────────
-  // Previously, srcObject was set inside requestWebcam() immediately after
-  // getUserMedia() resolved — but videoRef.current was still null at that
-  // point because React hadn't mounted the <video> element yet.
-  // This effect runs whenever webcamStream state changes, by which time React
-  // has already committed the <video> element to the DOM.
-  useEffect(() => {
-    if (!webcamStream || !videoRef.current) return;
-    const video = videoRef.current;
-    if (video.srcObject !== webcamStream) {
-      video.srcObject = webcamStream;
-      video.play().catch(() => {
-        // autoPlay policy may require user gesture — video will still
-        // play once user interacts (answer click, scroll, etc.)
+    // Check API key
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        error: 'AI generation is not configured. Please add GEMINI_API_KEY to your .env file.',
       });
     }
-  }, [webcamStream]);
 
-  // Start webcam capture every 30 seconds
-  useEffect(() => {
-    if (!sessionId || !webcamStream) return;
+    // Call Gemini
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 
-    // Capture immediately
-    captureWebcamSnapshot();
+    const questions: any[] = [];
+    let attempts = 0;
 
-    // Then capture every 30 seconds
-    captureIntervalRef.current = setInterval(() => {
-      captureWebcamSnapshot();
-    }, 30000);
+    // Retry a few times to fill shortfalls after sanitization/parsing.
+    while (questions.length < data.count && attempts < 3) {
+      const remaining = data.count - questions.length;
+      const prompt = buildPrompt(
+        data.topic,
+        remaining,
+        data.questionTypes,
+        data.difficulty
+      );
 
-    return () => {
-      if (captureIntervalRef.current) {
-        clearInterval(captureIntervalRef.current);
-      }
-    };
-  }, [sessionId, webcamStream]);
+      const result = await model.generateContent(prompt);
+      const rawText = result.response.text().trim();
 
-  const requestWebcam = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
-        },
-        audio: false
-      });
+      // Strip any accidental markdown fences the model may prepend
+      const jsonText = rawText
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
 
-      setWebcamStream(stream);
+      let parsed: any[];
+      try {
+--- [ ... pages 11-190 omitted for filing per Rule 70(5) convention ... ] ---
+--- PAGE 191 of 200 ---
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error('Webcam error:', error);
-      toast.error('Webcam access required. Exam will be terminated.');
-      logSuspiciousEvent('WEBCAM_DENIED', 'Student denied webcam access');
-      setTimeout(() => navigate('/student'), 3000);
-    }
-  };
-
-  // Keep handler refs up-to-date every render so stable wrappers always call latest logic
-  visibilityHandlerRef.current = () => {
-    if (document.hidden) {
-      logSuspiciousEvent('TAB_SWITCH', 'Student switched tabs or minimized window');
-      toast.error('⚠️ Tab switch detected!', { id: 'tab-switch' });
-    }
-  };
-
-  blurHandlerRef.current = () => {
-    // Debounce: skip if a blur fired within the last 2 seconds
-    const now = Date.now();
-    if (now - lastBlurRef.current < 2000) return;
-    lastBlurRef.current = now;
-    logSuspiciousEvent('WINDOW_BLUR', 'Browser window lost focus');
-  };
-
-  const captureWebcamSnapshot = async () => {
-    const currentSessionId = sessionIdRef.current;
-    if (!videoRef.current || !canvasRef.current || !currentSessionId) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-
-    if (!context) return;
-
-    // Set canvas size to match video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
@@ -341,6 +627,8 @@ export default function TakeExamPage() {
       const sessionResponse = await api.post(`/exam-sessions`, {
         examId: examId,
       });
+--- PAGE 192 of 200 ---
+
 
       const newSessionId = sessionResponse.data.session.id;
       sessionIdRef.current = newSessionId;
@@ -395,6 +683,8 @@ export default function TakeExamPage() {
     try {
       await saveAnswers();
       await api.post(`/exam-sessions/${sessionId}/submit`);
+
+--- PAGE 193 of 200 ---
 
       submittedRef.current = true;
       setSubmitted(true); // Unlock navigation guards (ref is checked by closures, state by JSX)
@@ -451,6 +741,8 @@ export default function TakeExamPage() {
             {q.content.options.map((option: string, index: number) => (
               <label
                 key={index}
+--- PAGE 194 of 200 ---
+
                 className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${currentAnswer === option
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 hover:border-gray-300'
@@ -506,6 +798,8 @@ export default function TakeExamPage() {
         );
 
       case 'TRUE_FALSE':
+--- PAGE 195 of 200 ---
+
         return (
           <div className="space-y-3">
             {['true', 'false'].map((option) => (
@@ -561,6 +855,8 @@ export default function TakeExamPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">⏳</div>
+--- PAGE 196 of 200 ---
+
           <p className="text-xl text-gray-600">Loading exam...</p>
         </div>
       </div>
@@ -616,6 +912,8 @@ export default function TakeExamPage() {
       )}
 
       {/* Top Bar */}
+--- PAGE 197 of 200 ---
+
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
@@ -671,6 +969,8 @@ export default function TakeExamPage() {
               <h3 className="font-bold mb-4">Questions</h3>
               <div className="space-y-2 mb-4">
                 <div className="text-sm text-gray-600">
+--- PAGE 198 of 200 ---
+
                   Answered: {answeredCount} / {exam.examQuestions.length}
                 </div>
               </div>
@@ -726,6 +1026,8 @@ export default function TakeExamPage() {
 
               <div className="flex justify-between items-center pt-6 border-t">
                 <button
+--- PAGE 199 of 200 ---
+
                   onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
                   disabled={currentQuestionIndex === 0}
                   className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -781,6 +1083,8 @@ export default function TakeExamPage() {
               <button
                 onClick={() => setShowSubmitConfirm(false)}
                 className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+--- PAGE 200 of 200 ---
+
               >
                 Cancel
               </button>
@@ -801,3 +1105,4 @@ export default function TakeExamPage() {
     </div>
   );
 }
+

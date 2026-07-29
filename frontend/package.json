@@ -1,6 +1,9 @@
 {
   "name": "procto-frontend",
   "version": "1.0.0",
+  "description": "Procto Online Proctoring System - Frontend",
+  "author": "Bhagyasree Roy",
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "vite",

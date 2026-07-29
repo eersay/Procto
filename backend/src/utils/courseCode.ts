@@ -1,4 +1,9 @@
 /**
+ * Procto — AI-powered online exam proctoring system
+ * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
+ */
+
+/**
  * Generate a Google Classroom-style course code
  * Format: xxx-xxxx-xxx (e.g., "abc-defg-hij")
  * Uses lowercase letters and numbers, easy to type

@@ -1,3 +1,8 @@
+/**
+ * Procto — AI-powered online exam proctoring system
+ * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
+ */
+
 export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
