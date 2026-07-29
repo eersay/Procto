@@ -1,5 +1,5 @@
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -324,7 +324,7 @@ export default function TakeExamPage() {
 
     const currentSessionId = sessionIdRef.current;
     if (!currentSessionId) {
-      // Session not ready yet — queue and flush when session starts
+      // Session not ready yet, queue and flush when session starts
       pendingEventsRef.current.push({ type, description });
       return;
     }
@@ -584,7 +584,7 @@ export default function TakeExamPage() {
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
 
-      {/* Webcam feed — small overlay in bottom-right */}
+      {/* Webcam feed, small overlay in bottom-right */}
       <div className="fixed bottom-4 right-4 z-30 rounded-xl overflow-hidden shadow-xl border-2 border-gray-200 bg-black" style={{ width: 180 }}>
         <video
           ref={videoRef}

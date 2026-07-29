@@ -1,4 +1,4 @@
-PROCTO — SOURCE CODE
+PROCTO - SOURCE CODE
 Author: Bhagyasree Roy
 Total pages: 200
 ======================================================================
@@ -365,7 +365,7 @@ model Notification {
 // ===== FILE: backend/src/controllers/aiQuestion.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -603,7 +603,7 @@ export const generateQuestionsWithAI = async (
 // ===== FILE: backend/src/controllers/auth.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -920,7 +920,7 @@ export const getMe = async (req: Request, res: Response) => {
 // ===== FILE: backend/src/controllers/course.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -1615,7 +1615,7 @@ export const dropCourse = async (req: AuthRequest, res: Response) => {
 // ===== FILE: backend/src/controllers/exam.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -2071,7 +2071,7 @@ export const removeQuestionFromExam = async (req: AuthRequest, res: Response) =>
 // ===== FILE: backend/src/controllers/examSession.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -2457,7 +2457,7 @@ export const terminateSession = async (req: AuthRequest, res: Response) => {
 // ===== FILE: backend/src/controllers/notification.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -2506,7 +2506,7 @@ export const markAllRead = async (req: AuthRequest, res: Response) => {
 // ===== FILE: backend/src/controllers/proctor.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
 --- PAGE 45 of 200 ---
 
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
@@ -2765,7 +2765,7 @@ export const invalidateSession = async (req: AuthRequest, res: Response) => {
 // ===== FILE: backend/src/controllers/question.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3086,7 +3086,7 @@ export const importQuestions = async (req: AuthRequest, res: Response) => {
 // ===== FILE: backend/src/controllers/result.controller.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3507,7 +3507,7 @@ export const getClassAnalytics = async (req: AuthRequest, res: Response) => {
 // ===== FILE: backend/src/middleware/auth.middleware.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3588,7 +3588,7 @@ export const authorize = (roles: UserRole[]) => {
 // ===== FILE: backend/src/routes/auth.routes.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
 --- PAGE 64 of 200 ---
 
@@ -3631,7 +3631,7 @@ export default router;
 // ===== FILE: backend/src/routes/course.routes.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3682,7 +3682,7 @@ export default router;
 // ===== FILE: backend/src/routes/exam.routes.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3723,7 +3723,7 @@ export default router;
 // ===== FILE: backend/src/routes/examSession.routes.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3757,7 +3757,7 @@ export default router;
 // ===== FILE: backend/src/routes/notification.routes.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3778,7 +3778,7 @@ export default router;
 // ===== FILE: backend/src/routes/proctor.routes.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3814,7 +3814,7 @@ export default router;
 // ===== FILE: backend/src/routes/question.routes.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3853,7 +3853,7 @@ export default router;
 // ===== FILE: backend/src/routes/result.routes.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3894,7 +3894,7 @@ export default router;
 // ===== FILE: backend/src/server.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3956,7 +3956,7 @@ app.listen(PORT, () => {
 // ===== FILE: backend/src/utils/courseCode.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -3986,7 +3986,7 @@ export function generateCourseCode(): string {
 // ===== FILE: backend/src/utils/errors.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 --- PAGE 71 of 200 ---
@@ -4010,7 +4010,7 @@ export function handleError(res: Response, error: unknown, context: string) {
 // ===== FILE: backend/src/utils/grading.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4285,7 +4285,7 @@ export async function gradeExamSession(sessionId: string) {
 // ===== FILE: backend/src/utils/passport.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4371,7 +4371,7 @@ export default passport;
 // ===== FILE: frontend/src/hooks/useTheme.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4419,7 +4419,7 @@ export function useTheme() {
 // ===== FILE: frontend/src/lib/api.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4522,7 +4522,7 @@ api.interceptors.response.use(
 // ===== FILE: frontend/src/lib/config.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4533,7 +4533,7 @@ export const getApiBaseUrl = () => {
 // ===== FILE: frontend/src/lib/exportCsv.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4582,7 +4582,7 @@ export function safeFilename(...parts: string[]): string {
 // ===== FILE: frontend/src/lib/useFaceDetection.ts =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4766,7 +4766,7 @@ export function useFaceDetection({
 // ===== FILE: frontend/src/App.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4824,7 +4824,7 @@ export default App;
 // ===== FILE: frontend/src/components/NotificationBell.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4979,7 +4979,7 @@ export default function NotificationBell() {
 // ===== FILE: frontend/src/main.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -4997,7 +4997,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 // ===== FILE: frontend/src/pages/AdminDashboard.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -5023,7 +5023,7 @@ export default function AdminDashboard() {
 // ===== FILE: frontend/src/pages/AuthCallbackPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -5093,7 +5093,7 @@ export default function AuthCallbackPage() {
 // ===== FILE: frontend/src/pages/ClassAnalyticsPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -5441,7 +5441,7 @@ export default function ClassAnalyticsPage() {
 // ===== FILE: frontend/src/pages/CourseDetailPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -6178,7 +6178,7 @@ function EmptyState({ icon, title, sub, children }: { icon: string; title: strin
 // ===== FILE: frontend/src/pages/ExamBuilderPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -6661,7 +6661,7 @@ export default function ExamBuilderPage() {
 // ===== FILE: frontend/src/pages/ExamPreflightPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -6913,7 +6913,7 @@ export default function ExamPreflightPage() {
 // ===== FILE: frontend/src/pages/FacultyDashboard.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -7217,7 +7217,7 @@ export default function FacultyDashboard() {
 // ===== FILE: frontend/src/pages/GradeSessionPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -7585,7 +7585,7 @@ export default function GradeSessionPage() {
 // ===== FILE: frontend/src/pages/GradingDashboardPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -7853,7 +7853,7 @@ export default function GradingDashboardPage() {
 // ===== FILE: frontend/src/pages/LandingPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -7950,7 +7950,7 @@ export default function LandingPage() {
 // ===== FILE: frontend/src/pages/LoginPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -8220,7 +8220,7 @@ export default function LoginPage() {
 // ===== FILE: frontend/src/pages/MyCoursesPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -8458,7 +8458,7 @@ export default function MyCoursesPage() {
 // ===== FILE: frontend/src/pages/MyResultsPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -8677,7 +8677,7 @@ export default function MyResultsPage() {
 // ===== FILE: frontend/src/pages/ProctorDashboardPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -9078,7 +9078,7 @@ export default function ProctorDashboardPage() {
 // ===== FILE: frontend/src/pages/QuestionBankPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -9840,7 +9840,7 @@ export default function QuestionBankPage() {
 // ===== FILE: frontend/src/pages/ResultDetailPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -10125,7 +10125,7 @@ export default function ResultDetailPage() {
 // ===== FILE: frontend/src/pages/StudentDashboard.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -10532,7 +10532,7 @@ export default function StudentDashboard() {
 // ===== FILE: frontend/src/pages/TakeExamPage.tsx =====
 
 /**
- * Procto — AI-powered online exam proctoring system
+ * Procto: AI-powered online exam proctoring system.
  * Copyright (c) 2026 Bhagyasree Roy. All rights reserved.
  */
 
@@ -10869,7 +10869,7 @@ export default function TakeExamPage() {
 
     const currentSessionId = sessionIdRef.current;
     if (!currentSessionId) {
-      // Session not ready yet — queue and flush when session starts
+      // Session not ready yet, queue and flush when session starts
       pendingEventsRef.current.push({ type, description });
       return;
     }
@@ -11139,7 +11139,7 @@ export default function TakeExamPage() {
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
 
-      {/* Webcam feed — small overlay in bottom-right */}
+      {/* Webcam feed, small overlay in bottom-right */}
       <div className="fixed bottom-4 right-4 z-30 rounded-xl overflow-hidden shadow-xl border-2 border-gray-200 bg-black" style={{ width: 180 }}>
         <video
           ref={videoRef}
