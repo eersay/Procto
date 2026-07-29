@@ -1,363 +1,85 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Shield, Eye, Brain, Lock, Fingerprint, Cpu, Scan, ChevronRight, ArrowRight, Menu, X, Sun, Moon
-} from 'lucide-react';
-import ParticleField from '../components/ParticleField';
-import GlitchText from '../components/GlitchText';
-import { HeroSection } from '@/components/ui/hero-section-dark';
+import { Shield, Eye, Lock, BarChart3, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 
-/* ── Data ─────────────────────────────────────────────────────── */
 const features = [
-    { icon: Eye, title: 'Visual Intelligence', desc: 'Real-time gaze tracking and face detection powered by BlazeFace neural networks running entirely in the browser.', accent: 'cyan' },
-    { icon: Brain, title: 'Behavioral Analysis', desc: 'AI monitors tab-switching, window focus patterns, and browsing anomalies in real time.', accent: 'violet' },
-    { icon: Lock, title: 'Secure Environment', desc: 'Locked-down session with tab-switch detection, copy-paste prevention, and right-click blocking.', accent: 'emerald' },
-    { icon: Fingerprint, title: 'Identity Verification', desc: 'Role-based access ensures the right person — student or faculty — takes or administers the exam.', accent: 'pink' },
-    { icon: Cpu, title: 'Edge Processing', desc: 'On-device ML inference via TensorFlow.js for real-time face analysis with zero server roundtrip.', accent: 'sky' },
-    { icon: Scan, title: 'Anomaly Detection', desc: 'Multi-signal fusion detects suspicious patterns: no face, multiple faces, looking away — all classified by severity.', accent: 'amber' },
+    { icon: Eye, title: 'Face Detection', desc: 'Real-time webcam monitoring flags missing faces, multiple faces, or a student looking away, powered by BlazeFace running in the browser.' },
+    { icon: Lock, title: 'Session Integrity', desc: 'Tab switches, window blur, copy-paste, and right-click are detected and logged automatically during every exam session.' },
+    { icon: BarChart3, title: 'Grading & Reports', desc: 'Auto-graded objective questions, manual grading for essays and code, and per-class analytics with CSV export.' },
 ];
 
-type AccentKey = 'cyan' | 'violet' | 'emerald' | 'pink' | 'sky' | 'amber';
-
-const accentStyles: Record<AccentKey, { icon: string; border: string; glow: string }> = {
-    cyan: { icon: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20', border: 'hover:border-cyan-400/50', glow: 'hover:shadow-cyan-500/10' },
-    violet: { icon: 'bg-violet-500/10 text-violet-400 border-violet-500/20', border: 'hover:border-violet-400/50', glow: 'hover:shadow-violet-500/10' },
-    emerald: { icon: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', border: 'hover:border-emerald-400/50', glow: 'hover:shadow-emerald-500/10' },
-    pink: { icon: 'bg-pink-500/10 text-pink-400 border-pink-500/20', border: 'hover:border-pink-400/50', glow: 'hover:shadow-pink-500/10' },
-    sky: { icon: 'bg-sky-500/10 text-sky-400 border-sky-500/20', border: 'hover:border-sky-400/50', glow: 'hover:shadow-sky-500/10' },
-    amber: { icon: 'bg-amber-500/10 text-amber-400 border-amber-500/20', border: 'hover:border-amber-400/50', glow: 'hover:shadow-amber-500/10' },
-};
-
-const capabilities = [
-    { title: 'Neuro-Sync Protocol', desc: 'Synchronizes face detection, tab-switch, and window-blur signals into a unified integrity score per session.' },
-    { title: 'Visual-Lock Engine', desc: 'BlazeFace computer vision pipeline tracks face count and horizontal center to detect looking-away behavior.' },
-    { title: 'Adaptive Cooldown AI', desc: 'Per-violation-type 10s cooldown + 2-cycle warmup prevents false positives during model initialization.' },
-];
-
-const marqueeItems = [
-    'Neural Integrity', 'AI Proctoring', 'Real-Time Detection', 'Edge Computing',
-    'Behavioral Analysis', 'Visual Lock', 'Anomaly Detection', 'BlazeFace TF.js',
-];
-
-/* ── Framer variants ──────────────────────────────────────────── */
-const fadeUp = {
-    hidden: { opacity: 0, y: 40 },
-    visible: (i: number) => ({
-        opacity: 1, y: 0,
-        transition: { delay: i * 0.1, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] as const },
-    }),
-};
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
-
-/* ── Component ────────────────────────────────────────────────── */
 export default function LandingPage() {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
-    const [mobileOpen, setMobileOpen] = useState(false);
-    const [scrollPct, setScrollPct] = useState(0);
-    const [scrolled, setScrolled] = useState(false);
-
-    useEffect(() => {
-        const onScroll = () => {
-            const top = window.scrollY;
-            const h = document.documentElement.scrollHeight - window.innerHeight;
-            setScrollPct(h > 0 ? (top / h) * 100 : 0);
-            setScrolled(top > 20);
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        return () => window.removeEventListener('scroll', onScroll);
-    }, []);
+    const muted = theme === 'light' ? 'text-slate-500' : 'text-neutral-500';
+    const heading = theme === 'light' ? 'text-slate-900' : 'text-white';
 
     return (
-        <div className={`landing-root ${theme === 'light' ? 'landing-root--light' : ''}`}>
-            <ParticleField />
+        <div className={`min-h-screen ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-neutral-950 text-white'}`}>
+            <div className="mx-auto max-w-5xl px-6 py-6 sm:px-8">
 
-            {/* Scroll progress */}
-            <div className="landing-progress" style={{ width: `${scrollPct}%` }} />
-
-            {/* ── NAVBAR ─────────────────────────────────────────────── */}
-            <nav className={`landing-nav ${scrolled ? 'landing-nav--scrolled' : ''}`}>
-                <div className="landing-nav__inner">
-                    {/* Logo */}
-                    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="landing-logo">
-                        <div className="landing-logo__icon">
-                            <Shield className="w-5 h-5 text-cyan-400" />
+                {/* ── NAV ── */}
+                <header className={`flex items-center justify-between border-b pb-4 ${theme === 'light' ? 'border-slate-200' : 'border-neutral-800'}`}>
+                    <div className="flex items-center gap-2">
+                        <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${theme === 'light' ? 'bg-emerald-100' : 'bg-emerald-500/15'}`}>
+                            <Shield className="w-4 h-4 text-emerald-500" />
                         </div>
-                        <div className="landing-logo__text">
-                            <span className="landing-logo__name">PROCTO</span>
-                            <span className="landing-logo__sub">Neural Systems</span>
-                        </div>
-                    </button>
-
-                    {/* Desktop links */}
-                    <div className="landing-nav__links">
-                        {['home', 'features', 'about'].map(s => (
-                            <a key={s} href={`#${s}`} className="landing-nav__link">
-                                {s.charAt(0).toUpperCase() + s.slice(1)}
-                            </a>
-                        ))}
+                        <span className="text-sm font-semibold">Procto</span>
                     </div>
-
-                    {/* CTAs */}
-                    <div className="landing-nav__ctas">
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={toggleTheme}
-                            className="landing-theme-toggle"
+                            className={`p-2 rounded-lg border transition-colors ${theme === 'light' ? 'border-slate-300 text-slate-600 hover:text-emerald-600' : 'border-neutral-700 text-neutral-400 hover:text-emerald-400'}`}
                             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                         >
                             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </button>
-                        <button onClick={() => navigate('/login')} className="landing-btn-primary">
+                        <button onClick={() => navigate('/login')}
+                            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400 transition">
                             Login
                         </button>
                     </div>
+                </header>
 
-                    {/* Mobile toggle */}
-                    <div className="flex items-center gap-2 md:hidden">
-                        <button
-                            onClick={toggleTheme}
-                            className="landing-theme-toggle"
-                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                        >
-                            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                        </button>
-                        <button className="landing-nav__toggle" onClick={() => setMobileOpen(v => !v)}>
-                            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {/* ── HERO ── */}
+                <section className="mt-16 mb-16 text-center">
+                    <h1 className={`text-4xl sm:text-5xl font-bold tracking-tight ${heading}`}>
+                        AI-powered exam proctoring
+                    </h1>
+                    <p className={`mt-4 max-w-xl mx-auto text-base sm:text-lg ${muted}`}>
+                        Online exams with real-time integrity monitoring, automatic grading, and role-based
+                        dashboards for students, faculty, and admins.
+                    </p>
+                    <div className="mt-8">
+                        <button onClick={() => navigate('/login')}
+                            className="rounded-lg bg-emerald-500 px-6 py-3 text-sm font-semibold text-black hover:bg-emerald-400 transition">
+                            Get Started
                         </button>
                     </div>
-                </div>
+                </section>
 
-                {/* Mobile menu */}
-                <AnimatePresence>
-                    {mobileOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.25 }}
-                            className="landing-mobile-menu"
-                        >
-                            {['home', 'features', 'about'].map(s => (
-                                <a key={s} href={`#${s}`} className="landing-mobile-link" onClick={() => setMobileOpen(false)}>
-                                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                                </a>
-                            ))}
-                            <button onClick={() => navigate('/login?tab=student')} className="landing-mobile-link text-cyan-400">Student Login</button>
-                            <button onClick={() => navigate('/login?tab=faculty')} className="landing-mobile-link text-violet-400">Faculty Login</button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </nav>
-
-            {/* ── HERO ───────────────────────────────────────────────── */}
-            <section id="home">
-                <HeroSection
-                    title="Neural Integrity Systems v2.0 · Christ University MCA"
-                    subtitle={{ regular: "Next-Gen ", gradient: "AI Proctoring" }}
-                    description="AI-powered proctoring that ensures academic honesty through real-time behavioral analysis, computer vision, and neural pattern recognition."
-                    ctaText="Get Started"
-                    ctaHref="/login"
-                    ctaOnClick={() => navigate('/login')}
-                    gridOptions={{ angle: 65, cellSize: 60, opacity: 0.3, lightLineColor: '#e2e8f0', darkLineColor: '#1e293b' }}
-                />
-            </section>
-
-            {/* ── MARQUEE ────────────────────────────────────────────── */}
-            <section className="landing-marquee-wrap">
-                <div className="landing-marquee-track">
-                    {[...marqueeItems, ...marqueeItems].map((item, i) => (
-                        <span key={i} className="landing-marquee-item">
-                            <span className="landing-marquee-dot" />
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </section>
-
-            {/* ── FEATURES GRID ──────────────────────────────────────── */}
-            <section id="features" className="landing-section">
-                <div className="landing-container">
-                    <motion.div
-                        className="landing-section__heading"
-                        initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                    >
-                        <span className="landing-eyebrow">Advanced Neural Modules</span>
-                        <h2 className="landing-section__title">Powered by Intelligence</h2>
-                    </motion.div>
-
-                    <motion.div
-                        className="landing-features-grid"
-                        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }} variants={stagger}
-                    >
-                        {features.map((f, i) => {
-                            const c = accentStyles[f.accent as AccentKey];
-                            return (
-                                <motion.div key={f.title} variants={fadeUp} custom={i}
-                                    className={`landing-feature-card ${c.border} ${c.glow}`}>
-                                    <div className={`landing-feature-card__icon ${c.icon}`}>
-                                        <f.icon className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="landing-feature-card__title">{f.title}</h3>
-                                    <p className="landing-feature-card__desc">{f.desc}</p>
-                                </motion.div>
-                            );
-                        })}
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ── ABOUT / CAPABILITIES ───────────────────────────────── */}
-            <section id="about" className="landing-section landing-section--bordered">
-                <div className="landing-container landing-about__grid">
-                    {/* Left */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-                    >
-                        <span className="landing-eyebrow">Core Architecture</span>
-                        <h2 className="landing-section__title">Neural Protocols</h2>
-                        <p className="landing-about__built">
-                            Built for <span className="landing-gradient-text--cyan">Christ University MCA</span>
-                        </p>
-                        <p className="landing-about__body">
-                            Multi-layered architecture combining TensorFlow.js edge inference with adaptive event
-                            monitoring. Developed as part of the Software Project Development course.
-                        </p>
-
-                        <div className="landing-caps">
-                            {capabilities.map((cap, i) => (
-                                <motion.div key={cap.title} className="landing-cap"
-                                    initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
-                                    viewport={{ once: true }} transition={{ delay: i * 0.15 }}>
-                                    <h4 className="landing-cap__title">
-                                        <ChevronRight className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                                        {cap.title}
-                                    </h4>
-                                    <p className="landing-cap__desc">{cap.desc}</p>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
-
-                    {/* Right – System status panel */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }} transition={{ delay: 0.2 }}
-                    >
-                        <div className="landing-sys-panel">
-                            <div className="landing-sys-panel__glow" />
-                            <div className="landing-sys-panel__comment">{'// SYSTEM STATUS'}</div>
-                            <div className="landing-sys-panel__rows">
-                                {[
-                                    { name: 'face_detection', status: 'ACTIVE', color: 'text-emerald-400' },
-                                    { name: 'tab_monitor', status: 'ACTIVE', color: 'text-emerald-400' },
-                                    { name: 'blur_guard', status: 'ACTIVE', color: 'text-emerald-400' },
-                                    { name: 'webcam_capture', status: 'ACTIVE', color: 'text-emerald-400' },
-                                    { name: 'anomaly_detect', status: 'LEARNING', color: 'text-cyan-400' },
-                                ].map(s => (
-                                    <div key={s.name} className="landing-sys-panel__row">
-                                        <span>{s.name}</span>
-                                        <span className={s.color}>● {s.status}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="landing-sys-panel__score-wrap">
-                                <div className="landing-sys-panel__score-row">
-                                    <span className="landing-sys-panel__score-label">INTEGRITY SCORE</span>
-                                    <span className="landing-sys-panel__score-val">98.7%</span>
+                {/* ── FEATURES ── */}
+                <section className="mb-16">
+                    <div className="grid sm:grid-cols-3 gap-5">
+                        {features.map(({ icon: Icon, title, desc }) => (
+                            <div key={title}
+                                className={`rounded-xl border p-5 ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-neutral-800 bg-neutral-900/60'}`}>
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${theme === 'light' ? 'bg-emerald-100' : 'bg-emerald-500/15'}`}>
+                                    <Icon className="w-4 h-4 text-emerald-500" />
                                 </div>
-                                <div className="landing-sys-panel__bar-bg">
-                                    <motion.div
-                                        className="landing-sys-panel__bar-fill"
-                                        initial={{ width: 0 }}
-                                        whileInView={{ width: '98.7%' }}
-                                        viewport={{ once: true }}
-                                        transition={{ duration: 1.5, ease: 'easeOut' }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="landing-about-stats">
-                            {[
-                                { val: '99.9%', label: 'Uptime', color: 'text-cyan-400' },
-                                { val: '10+', label: 'Event Types', color: 'text-violet-400' },
-                                { val: '98%', label: 'Detection Rate', color: 'text-emerald-400' },
-                            ].map(s => (
-                                <div key={s.label} className="text-center">
-                                    <p className={`text-3xl font-bold ${s.color}`}>{s.val}</p>
-                                    <p className="text-sm text-slate-500 mt-1">{s.label}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ── CTA ────────────────────────────────────────────────── */}
-            <section className="landing-cta-wrap">
-                <div className="landing-container text-center relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }} transition={{ duration: 0.7 }}
-                    >
-                        <h2 className="landing-cta__title">
-                            <GlitchText className="landing-gradient-text--cyan">JOIN THE NEURAL NETWORK</GlitchText>
-                        </h2>
-                        <p className="landing-cta__desc">
-                            Whether you're a student or educator — there's a place for you in the PROCTO ecosystem.
-                        </p>
-                        <div className="landing-cta__btns">
-                            <button onClick={() => navigate('/login')} className="landing-btn-primary landing-btn-primary--lg">
-                                Get Started <ArrowRight className="w-4 h-4 inline ml-2" />
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-                <div className="landing-orb landing-orb--center" />
-            </section>
-
-            {/* ── FOOTER ─────────────────────────────────────────────── */}
-            <footer className="landing-footer">
-                <div className="landing-container">
-                    <div className="landing-footer__grid">
-                        <div>
-                            <div className="flex items-center gap-2 mb-3">
-                                <Shield className="w-5 h-5 text-cyan-400" />
-                                <span className="text-lg font-black tracking-tighter">PROCTO</span>
-                            </div>
-                            <p className="text-sm text-slate-500 leading-relaxed">
-                                Neural Integrity Systems v2.0<br />
-                                AI-powered exam proctoring.
-                            </p>
-                        </div>
-                        {[
-                            { title: 'Protocols', items: ['Neuro-Sync', 'Visual-Lock', 'Audio-Pulse', 'Edge-Hash'] },
-                            { title: 'Support', items: ['Documentation', 'System Status', 'Privacy Policy'] },
-                            { title: 'Project', items: ['GitHub', 'Christ University MCA', 'SPD Course'] },
-                        ].map(col => (
-                            <div key={col.title}>
-                                <h5 className="landing-footer__col-title">{col.title}</h5>
-                                <div className="space-y-2">
-                                    {col.items.map(item => (
-                                        <div key={item} className="text-sm text-slate-500 hover:text-cyan-400 transition-colors cursor-pointer">{item}</div>
-                                    ))}
-                                </div>
+                                <h3 className={`text-sm font-semibold mb-1.5 ${heading}`}>{title}</h3>
+                                <p className={`text-xs leading-relaxed ${muted}`}>{desc}</p>
                             </div>
                         ))}
                     </div>
+                </section>
 
-                    <div className="landing-footer__bottom">
-                        <span>© {new Date().getFullYear()} PROCTO · Christ University MCA</span>
-                        <span className="hidden sm:inline">Built with React · TypeScript · TensorFlow.js</span>
-                    </div>
-                </div>
-            </footer>
-
-            {/* Scanline overlay */}
-            <div className="landing-scanlines" />
+                {/* ── FOOTER ── */}
+                <footer className={`flex flex-col sm:flex-row items-center justify-between gap-2 border-t pt-4 pb-8 text-xs ${theme === 'light' ? 'border-slate-200 text-slate-500' : 'border-neutral-800 text-neutral-600'}`}>
+                    <span>© {new Date().getFullYear()} Procto · Christ University MCA</span>
+                    <span>Software Project Development</span>
+                </footer>
+            </div>
         </div>
     );
 }

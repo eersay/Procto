@@ -28,11 +28,6 @@ interface Exam {
   examQuestions: Question[];
 }
 
-interface Answer {
-  questionId: string;
-  response: any;
-}
-
 export default function TakeExamPage() {
   const { examId } = useParams<{ examId: string }>();
   const location = useLocation();
@@ -56,7 +51,7 @@ export default function TakeExamPage() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const captureIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const captureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Ref so event handlers always read the current sessionId (avoids stale closure)
   const sessionIdRef = useRef<string | null>(null);
   // Queue for events that fire before session has started (race condition fix)
@@ -262,7 +257,6 @@ export default function TakeExamPage() {
   // Keep handler refs up-to-date every render so stable wrappers always call latest logic
   visibilityHandlerRef.current = () => {
     if (document.hidden) {
-      console.log('[Proctor] TAB_SWITCH detected at', new Date().toISOString());
       logSuspiciousEvent('TAB_SWITCH', 'Student switched tabs or minimized window');
       toast.error('⚠️ Tab switch detected!', { id: 'tab-switch' });
     }
@@ -273,7 +267,6 @@ export default function TakeExamPage() {
     const now = Date.now();
     if (now - lastBlurRef.current < 2000) return;
     lastBlurRef.current = now;
-    console.log('[Proctor] WINDOW_BLUR detected at', new Date().toISOString());
     logSuspiciousEvent('WINDOW_BLUR', 'Browser window lost focus');
   };
 
@@ -303,8 +296,6 @@ export default function TakeExamPage() {
         imageData,
         timestamp: new Date().toISOString(),
       });
-
-      console.log('Webcam snapshot captured');
     } catch (error) {
       console.error('Failed to upload webcam snapshot:', error);
     }
@@ -317,7 +308,6 @@ export default function TakeExamPage() {
         description,
         timestamp: new Date().toISOString(),
       });
-      console.log('[Proctor] Event recorded:', type);
     } catch (error: any) {
       console.error('[Proctor] Failed to record event:', type,
         error.response?.status, error.response?.data);
@@ -330,7 +320,6 @@ export default function TakeExamPage() {
     const currentSessionId = sessionIdRef.current;
     if (!currentSessionId) {
       // Session not ready yet — queue and flush when session starts
-      console.log('[Proctor] Queuing event (session not ready):', type);
       pendingEventsRef.current.push({ type, description });
       return;
     }

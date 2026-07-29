@@ -117,24 +117,20 @@ export function useFaceDetection({
             const canvas = canvasRef.current;
 
             if (!modelLoadedRef.current || !modelRef.current || !canvas) {
-                console.log('[FaceDetection] Guard1: model not ready yet');
                 return;
             }
 
             if (!video || video.readyState < 2 || video.paused || video.ended) {
-                console.log('[FaceDetection] Guard2: video not ready, readyState=', video?.readyState, 'paused=', video?.paused);
                 return;
             }
 
             if (!snapshotCanvas(video, canvas)) {
-                console.log('[FaceDetection] Guard3: snapshot failed (0×0)');
                 return;
             }
 
             // 2-cycle warmup before violations can fire
             if (warmupRef.current < 2) {
                 warmupRef.current += 1;
-                console.log(`[FaceDetection] Warmup ${warmupRef.current}/2`);
                 try {
                     const preds = await modelRef.current.estimateFaces(canvas, false);
                     emitStatus({ faceCount: preds.length });
@@ -146,7 +142,6 @@ export function useFaceDetection({
                 const preds = await modelRef.current.estimateFaces(canvas, false);
                 const count: number = preds.length;
                 emitStatus({ faceCount: count });
-                console.log(`[FaceDetection] Faces: ${count}`);
 
                 if (count === 0) {
                     fireViolation('FACE_NOT_DETECTED', 'No face detected in webcam frame');
