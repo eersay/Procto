@@ -2,7 +2,6 @@ import 'dotenv/config'; // Must be first
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import courseRoutes from './routes/course.routes';
@@ -13,8 +12,6 @@ import proctorRoutes from './routes/proctor.routes';
 import resultRoutes from './routes/result.routes';
 import notificationRoutes from './routes/notification.routes';
 import passport from './utils/passport';
-
-// dotenv.config(); // Loaded at top
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -30,7 +27,7 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -45,7 +42,7 @@ app.use('/api/v1/results', resultRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 
 // 404 handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 

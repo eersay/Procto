@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { PrismaClient, ExamStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
 

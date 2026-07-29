@@ -185,7 +185,7 @@ export const saveAnswers = async (req: AuthRequest, res: Response) => {
 export const webcamCapture = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const data = webcamCaptureSchema.parse(req.body);
+    webcamCaptureSchema.parse(req.body); // validate shape; capture itself isn't persisted server-side
     const studentId = req.user!.userId;
 
     const session = await prisma.examSession.findUnique({
@@ -203,8 +203,6 @@ export const webcamCapture = async (req: AuthRequest, res: Response) => {
     if (session.status !== 'ACTIVE') {
       return res.status(400).json({ error: 'Session is not active' });
     }
-
-    console.log(`Webcam capture for session ${id} at ${data.timestamp}`);
 
     res.json({ message: 'Webcam capture received' });
   } catch (error) {
@@ -257,8 +255,6 @@ export const logSuspiciousEvent = async (req: AuthRequest, res: Response) => {
         timestamp: new Date(data.timestamp),
       },
     });
-
-    console.log(`Suspicious event logged: ${data.type} for session ${id}`);
 
     res.status(201).json({
       message: 'Event logged',
@@ -378,7 +374,6 @@ export const terminateSession = async (req: AuthRequest, res: Response) => {
       data: { status: 'TERMINATED', submittedAt: new Date() },
     });
 
-    console.log(`Session ${id} terminated (student left without submitting)`);
     res.json({ message: 'Session terminated' });
   } catch (error) {
     console.error('Terminate session error:', error);

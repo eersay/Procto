@@ -4,12 +4,20 @@ import { PrismaClient, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export interface AuthRequest extends Request {
-  user?: {
-    userId: string;
-    role: UserRole;
-  };
+// Augment Express's global User type (declaration merging) so req.user carries
+// our JWT payload shape everywhere, including inside Express's own RequestHandler
+// typing — without this, TS treats AuthRequest as incompatible with Request and
+// route registration (router.get/post(...)) fails to type-check.
+declare global {
+  namespace Express {
+    interface User {
+      userId: string;
+      role: UserRole;
+    }
+  }
 }
+
+export type AuthRequest = Request;
 
 export const authenticate = async (
   req: AuthRequest,

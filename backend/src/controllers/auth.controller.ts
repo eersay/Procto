@@ -238,7 +238,6 @@ export const refreshToken = async (req: Request, res: Response) => {
 export const googleCallback = async (req: Request, res: Response) => {
   try {
     const user = req.user as any;
-    console.log('[google/callback] user from passport:', user?.id, user?.email, user?.role);
     if (!user) {
       console.error('[google/callback] no user — redirecting to login');
       return res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth`);
@@ -249,7 +248,6 @@ export const googleCallback = async (req: Request, res: Response) => {
       process.env.JWT_ACCESS_SECRET!,
       { expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '24h') as any }
     );
-    console.log('[google/callback] accessToken generated, length:', accessToken.length);
 
     const refreshTokenValue = jwt.sign(
       { userId: user.id },
@@ -275,7 +273,6 @@ export const googleCallback = async (req: Request, res: Response) => {
     }));
 
     const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?token=${accessToken}&refresh=${refreshTokenValue}&user=${userJson}&next=${encodeURIComponent(dest)}`;
-    console.log('[google/callback] redirecting to:', redirectUrl.slice(0, 80) + '...');
     res.redirect(redirectUrl);
   } catch (error) {
     console.error('[google/callback] ERROR:', error);

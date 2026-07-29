@@ -1,10 +1,17 @@
-import { PrismaClient, QuestionType } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 interface GradingResult {
   autoScore: number;
   needsManualGrading: boolean;
+}
+
+// Question.content is stored as Prisma Json; shape it for the grading functions below.
+interface QuestionContent {
+  correctAnswer?: any;
+  caseInsensitive?: boolean;
+  tolerance?: number;
 }
 
 /**
@@ -22,7 +29,8 @@ export async function gradeAnswer(
     return { autoScore: 0, needsManualGrading: false };
   }
 
-  const { type, content, points } = question;
+  const { type, points } = question;
+  const content = question.content as unknown as QuestionContent;
 
   switch (type) {
     case 'MULTIPLE_CHOICE':
@@ -183,7 +191,7 @@ export async function gradeExamSession(sessionId: string) {
         data: {
           sessionId,
           questionId: question.id,
-          response: null,
+          response: Prisma.JsonNull,
           autoScore: 0,
         },
       });

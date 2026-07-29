@@ -425,7 +425,6 @@ export const getCourseDetail = async (req: AuthRequest, res: Response) => {
     });
 
     // Exams
-    const now = new Date();
     const exams = await prisma.exam.findMany({
       where: { courseId: id, deletedAt: null },
       include: { _count: { select: { examQuestions: true } } },
@@ -434,7 +433,6 @@ export const getCourseDetail = async (req: AuthRequest, res: Response) => {
 
     // Faculty-only data
     let roster = null;
-    let performance = null;
 
     if (role === 'FACULTY' || role === 'ADMIN') {
       roster = await prisma.enrollment.findMany({
