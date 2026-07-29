@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { gradeExamSession } from '../utils/grading';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -121,11 +122,7 @@ export const startExamSession = async (req: AuthRequest, res: Response) => {
       session,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Start session error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Start session');
   }
 };
 
@@ -173,11 +170,7 @@ export const saveAnswers = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Answers saved' });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed' });
-    }
-    console.error('Save answers error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Save answers');
   }
 };
 
@@ -206,11 +199,7 @@ export const webcamCapture = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Webcam capture received' });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed' });
-    }
-    console.error('Webcam capture error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Webcam capture');
   }
 };
 
@@ -261,11 +250,7 @@ export const logSuspiciousEvent = async (req: AuthRequest, res: Response) => {
       event,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed' });
-    }
-    console.error('Log suspicious event error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Log suspicious event');
   }
 };
 
@@ -316,8 +301,7 @@ export const submitExam = async (req: AuthRequest, res: Response) => {
       });
     }
   } catch (error) {
-    console.error('Submit exam error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Submit exam');
   }
 };
 
@@ -348,8 +332,7 @@ export const getSession = async (req: AuthRequest, res: Response) => {
 
     res.json({ session });
   } catch (error) {
-    console.error('Get session error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get session');
   }
 };
 
@@ -376,7 +359,6 @@ export const terminateSession = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Session terminated' });
   } catch (error) {
-    console.error('Terminate session error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Terminate session');
   }
 };

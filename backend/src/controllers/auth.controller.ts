@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -94,11 +95,7 @@ export const register = async (req: Request, res: Response) => {
       accessToken,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Registration');
   }
 };
 
@@ -180,11 +177,7 @@ export const login = async (req: Request, res: Response) => {
       accessToken,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Login');
   }
 };
 
@@ -201,8 +194,7 @@ export const logout = async (req: Request, res: Response) => {
 
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Logout');
   }
 };
 

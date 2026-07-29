@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -19,8 +20,7 @@ export const getNotifications = async (req: AuthRequest, res: Response) => {
 
         res.json({ notifications, unreadCount });
     } catch (error) {
-        console.error('Get notifications error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        return handleError(res, error, 'Get notifications');
     }
 };
 
@@ -36,7 +36,6 @@ export const markAllRead = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'All notifications marked as read' });
     } catch (error) {
-        console.error('Mark all read error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        return handleError(res, error, 'Mark all read');
     }
 };

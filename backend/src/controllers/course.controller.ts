@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { generateCourseCode } from '../utils/courseCode';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -65,11 +66,7 @@ export const createCourse = async (req: AuthRequest, res: Response) => {
       course,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Create course error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Create course');
   }
 };
 
@@ -118,8 +115,7 @@ export const getCourses = async (req: AuthRequest, res: Response) => {
 
     res.json({ courses });
   } catch (error) {
-    console.error('Get courses error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get courses');
   }
 };
 
@@ -163,8 +159,7 @@ export const getCourseById = async (req: AuthRequest, res: Response) => {
 
     res.json({ course });
   } catch (error) {
-    console.error('Get course error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get course');
   }
 };
 
@@ -298,8 +293,7 @@ export const enrollStudent = async (req: AuthRequest, res: Response) => {
       course,
     });
   } catch (error) {
-    console.error('Enroll error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Enroll');
   }
 };
 
@@ -345,8 +339,7 @@ export const getCourseRoster = async (req: AuthRequest, res: Response) => {
       })),
     });
   } catch (error) {
-    console.error('Get roster error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get roster');
   }
 };
 
@@ -382,8 +375,7 @@ export const unenrollStudent = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Student removed successfully' });
   } catch (error) {
-    console.error('Unenroll error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Unenroll');
   }
 };
 
@@ -464,8 +456,7 @@ export const getCourseDetail = async (req: AuthRequest, res: Response) => {
 
     res.json({ course, announcements, exams, roster, myGrades });
   } catch (error) {
-    console.error('Get course detail error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get course detail');
   }
 };
 
@@ -520,10 +511,7 @@ export const createAnnouncement = async (req: AuthRequest, res: Response) => {
     res.status(201).json({ announcement });
 
   } catch (error) {
-    if (error instanceof z.ZodError)
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    console.error('Create announcement error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Create announcement');
   }
 };
 
@@ -550,8 +538,7 @@ export const getAnnouncements = async (req: AuthRequest, res: Response) => {
 
     res.json({ announcements });
   } catch (error) {
-    console.error('Get announcements error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get announcements');
   }
 };
 
@@ -575,8 +562,7 @@ export const deleteAnnouncement = async (req: AuthRequest, res: Response) => {
     await prisma.announcement.delete({ where: { id: announcementId } });
     res.json({ message: 'Announcement deleted' });
   } catch (error) {
-    console.error('Delete announcement error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Delete announcement');
   }
 };
 
@@ -651,8 +637,7 @@ export const getStudentPerformance = async (req: AuthRequest, res: Response) => 
 
     res.json({ exams: course.exams, students: matrix });
   } catch (error) {
-    console.error('Student performance error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Student performance');
   }
 };
 
@@ -672,8 +657,7 @@ export const dropCourse = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Successfully dropped course' });
   } catch (error) {
-    console.error('Drop course error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Drop course');
   }
 };
 

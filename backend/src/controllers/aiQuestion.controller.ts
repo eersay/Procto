@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -216,12 +217,6 @@ export const generateQuestionsWithAI = async (
     const finalQuestions = questions.slice(0, data.count);
     return res.json({ questions: finalQuestions, generatedCount: finalQuestions.length });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('AI generate questions error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'AI generate questions');
   }
 };

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -84,11 +85,7 @@ export const createExam = async (req: AuthRequest, res: Response) => {
       exam,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Create exam error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Create exam');
   }
 };
 
@@ -152,8 +149,7 @@ export const getExams = async (req: AuthRequest, res: Response) => {
 
     res.json({ exams });
   } catch (error) {
-    console.error('Get exams error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get exams');
   }
 };
 
@@ -216,8 +212,7 @@ export const getExamById = async (req: AuthRequest, res: Response) => {
 
     res.json({ exam });
   } catch (error) {
-    console.error('Get exam error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get exam');
   }
 };
 
@@ -276,11 +271,7 @@ export const updateExam = async (req: AuthRequest, res: Response) => {
       exam,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Update exam error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Update exam');
   }
 };
 
@@ -318,8 +309,7 @@ export const deleteExam = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Exam deleted successfully' });
   } catch (error) {
-    console.error('Delete exam error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Delete exam');
   }
 };
 
@@ -358,8 +348,7 @@ export const publishExam = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Exam published successfully' });
   } catch (error) {
-    console.error('Publish exam error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Publish exam');
   }
 };
 
@@ -407,11 +396,7 @@ export const addQuestionsToExam = async (req: AuthRequest, res: Response) => {
       message: `${data.questionIds.length} question(s) added to exam`,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Add questions error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Add questions');
   }
 };
 
@@ -442,7 +427,6 @@ export const removeQuestionFromExam = async (req: AuthRequest, res: Response) =>
 
     res.json({ message: 'Question removed from exam' });
   } catch (error) {
-    console.error('Remove question error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Remove question');
   }
 };

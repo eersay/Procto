@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { PrismaClient, QuestionType } from '@prisma/client';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -81,11 +82,7 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
       question,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Create question error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Create question');
   }
 };
 
@@ -154,8 +151,7 @@ export const getQuestions = async (req: AuthRequest, res: Response) => {
 
     res.json({ questions });
   } catch (error) {
-    console.error('Get questions error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get questions');
   }
 };
 
@@ -188,8 +184,7 @@ export const getQuestionById = async (req: AuthRequest, res: Response) => {
 
     res.json({ question });
   } catch (error) {
-    console.error('Get question error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get question');
   }
 };
 
@@ -228,11 +223,7 @@ export const updateQuestion = async (req: AuthRequest, res: Response) => {
       question,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Update question error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Update question');
   }
 };
 
@@ -261,8 +252,7 @@ export const deleteQuestion = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Question deleted successfully' });
   } catch (error) {
-    console.error('Delete question error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Delete question');
   }
 };
 
@@ -306,10 +296,6 @@ export const importQuestions = async (req: AuthRequest, res: Response) => {
       count: created.count,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    console.error('Import questions error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Import questions');
   }
 };

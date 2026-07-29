@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -78,8 +79,7 @@ export const getActiveExamSessions = async (req: AuthRequest, res: Response) => 
       totalActive: sessionsWithTime.length,
     });
   } catch (error) {
-    console.error('Get active sessions error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get active sessions');
   }
 };
 
@@ -123,8 +123,7 @@ export const getAllExamSessions = async (req: AuthRequest, res: Response) => {
 
     res.json({ sessions });
   } catch (error) {
-    console.error('Get exam sessions error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get exam sessions');
   }
 };
 
@@ -193,8 +192,7 @@ export const getSessionDetails = async (req: AuthRequest, res: Response) => {
       eventsSummary,
     });
   } catch (error) {
-    console.error('Get session details error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get session details');
   }
 };
 
@@ -238,7 +236,6 @@ export const invalidateSession = async (req: AuthRequest, res: Response) => {
       sessionId,
     });
   } catch (error) {
-    console.error('Invalidate session error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Invalidate session');
   }
 };

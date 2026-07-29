@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { handleError } from '../utils/errors';
 
 const prisma = new PrismaClient();
 
@@ -34,8 +35,7 @@ export const getMyResults = async (req: AuthRequest, res: Response) => {
 
     res.json({ results: sessions });
   } catch (error) {
-    console.error('Get my results error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get my results');
   }
 };
 
@@ -91,8 +91,7 @@ export const getResultById = async (req: AuthRequest, res: Response) => {
 
     res.json({ session, result: session.result, breakdown });
   } catch (error) {
-    console.error('Get result error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get result');
   }
 };
 
@@ -155,8 +154,7 @@ export const getPendingGrading = async (req: AuthRequest, res: Response) => {
 
     res.json({ exams: Array.from(examMap.values()) });
   } catch (error) {
-    console.error('Get pending grading error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get pending grading');
   }
 };
 
@@ -186,8 +184,7 @@ export const getExamSessionsForGrading = async (req: AuthRequest, res: Response)
 
     res.json({ exam, sessions });
   } catch (error) {
-    console.error('Get exam sessions for grading error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Get exam sessions for grading');
   }
 };
 
@@ -253,10 +250,7 @@ export const submitManualGrades = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: data.finalize ? 'Grades finalized' : 'Grades saved as draft', result });
   } catch (error) {
-    if (error instanceof z.ZodError)
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    console.error('Submit manual grades error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Submit manual grades');
   }
 };
 
@@ -284,8 +278,7 @@ export const togglePublishResult = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: publish ? 'Result published' : 'Result unpublished', result });
   } catch (error) {
-    console.error('Toggle publish error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Toggle publish');
   }
 };
 
@@ -317,8 +310,7 @@ export const publishAllResults = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: `${publish ? 'Published' : 'Unpublished'} results for ${sessionIds.length} student(s)` });
   } catch (error) {
-    console.error('Publish all results error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Publish all results');
   }
 };
 
@@ -402,7 +394,6 @@ export const getClassAnalytics = async (req: AuthRequest, res: Response) => {
       questionStats,
     });
   } catch (error) {
-    console.error('Class analytics error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleError(res, error, 'Class analytics');
   }
 };
