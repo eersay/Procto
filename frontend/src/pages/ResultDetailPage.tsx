@@ -70,9 +70,6 @@ export default function ResultDetailPage() {
 
   if (!result || !result.result) return (
     <div className={`min-h-screen flex items-center justify-center ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-neutral-950 text-white'}`}>
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
-      </div>
       <div className="relative text-center">
         <div className="mx-auto w-16 h-16 rounded-2xl bg-neutral-900 border border-neutral-700 flex items-center justify-center mb-6 text-3xl">⏳</div>
         <h2 className="text-2xl font-bold mb-2">Result Pending</h2>
@@ -101,18 +98,6 @@ export default function ResultDetailPage() {
             : { background: '#171717', color: '#fff', border: '1px solid #374151' },
         }}
       />
-
-      {/* Ambient glow */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl" />
-        <div className="absolute -right-32 bottom-20 h-80 w-80 rounded-full bg-emerald-500/15 blur-3xl" />
-      </div>
-      <div className="pointer-events-none fixed inset-0 opacity-[0.025]"
-        style={{
-          backgroundImage: theme === 'light'
-            ? `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(15,23,42,0.05) 2px,rgba(15,23,42,0.05) 4px)`
-            : `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,0.04) 2px,rgba(255,255,255,0.04) 4px)`,
-        }} />
 
       <div className="relative mx-auto w-full px-6 py-8 sm:px-8 lg:px-12 xl:px-16 xl:py-12 max-w-5xl">
 

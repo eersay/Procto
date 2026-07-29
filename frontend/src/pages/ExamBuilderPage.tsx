@@ -163,12 +163,6 @@ export default function ExamBuilderPage() {
         }}
       />
 
-      {/* Ambient */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -left-40 top-0 h-80 w-80 rounded-full bg-violet-500/20 blur-3xl" />
-        <div className="absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl" />
-      </div>
-
       <div className="relative mx-auto w-full max-w-7xl px-6 py-8 sm:px-8">
 
         {/* Header */}

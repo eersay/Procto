@@ -106,17 +106,8 @@ export default function ClassAnalyticsPage() {
     ];
 
     return (
-        <main className={`min-h-screen ${theme === 'light' ? 'bg-gradient-to-br from-slate-100 via-white to-slate-100 text-slate-900' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100'}`}>
+        <main className={`min-h-screen ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
             <Toaster position="top-right" toastOptions={{ style: theme === 'light' ? { background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1' } : { background: '#0f172a', color: '#f1f5f9', border: '1px solid #334155' } }} />
-
-            {/* Ambient glows */}
-            <div className="pointer-events-none fixed inset-0 overflow-hidden">
-                <div className="absolute -left-40 top-0 h-80 w-80 rounded-full bg-violet-500/20 blur-3xl" />
-                <div className="absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl" />
-                <div className="absolute left-1/3 top-1/2 h-96 w-96 rounded-full bg-cyan-500/5 blur-3xl" />
-            </div>
-            <div className="pointer-events-none fixed inset-0 opacity-[0.025]"
-                style={{ backgroundImage: `repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,0.04) 2px,rgba(255,255,255,0.04) 4px)` }} />
 
             <div className="relative mx-auto w-full max-w-6xl px-6 py-8 sm:px-8 xl:py-12">
 
