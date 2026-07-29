@@ -19,11 +19,6 @@ services:
     # In production, do NOT expose postgres port publicly
     ports: []
 
-  redis:
-    restart: always
-    # In production, do NOT expose redis port publicly
-    ports: []
-
   backend:
     build:
       target: production # uses the production stage in Dockerfile
@@ -38,7 +33,6 @@ services:
       target: production # builds with nginx
       args:
         VITE_API_URL: ${VITE_API_URL}
-        VITE_WS_URL: ${VITE_WS_URL}
     restart: always
     ports:
       - "80:80"

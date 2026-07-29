@@ -32,24 +32,6 @@ services:
       retries: 5
 
   # ──────────────────────────────────────────────
-  #  CACHE / QUEUE  (Redis 7)
-  # ──────────────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: procto_redis
-    restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
-    ports:
-      - "6379:6379" # connect with RedisInsight on localhost:6379
-    volumes:
-      - redis_data:/data # persist queue jobs across restarts
-    healthcheck:
-      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ──────────────────────────────────────────────
   #  BACKEND  (Node.js / Express API)
   # ──────────────────────────────────────────────
   backend:
@@ -65,18 +47,14 @@ services:
       NODE_ENV: development
       PORT: 4000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
     ports:
       - "4000:4000" # REST API  →  http://localhost:4000
-      - "4001:4001" # WebSocket →  ws://localhost:4001  (Socket.io)
       - "5555:5555" # Prisma Studio → http://localhost:5555
     volumes:
       - ./backend:/app # live reload: your local code mirrors into the container
       - /app/node_modules # anonymous volume keeps container's node_modules isolated
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     command: npm run dev # uses ts-node-dev / nodemon for hot reload
 
@@ -91,8 +69,7 @@ services:
     container_name: procto_frontend
     restart: unless-stopped
     environment:
-      VITE_API_URL: http://10.4.220.252:4000/api/v1
-      VITE_WS_URL: ws://10.4.220.252:4001
+      VITE_API_URL: http://localhost:4000/api/v1
     ports:
       - "5173:5173" # Vite dev server  →  http://localhost:5173
     volumes:
@@ -107,6 +84,4 @@ services:
 # ──────────────────────────────────────────────
 volumes:
   postgres_data:
-    driver: local
-  redis_data:
     driver: local
