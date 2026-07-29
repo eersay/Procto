@@ -16,23 +16,16 @@ Built as a Software Project Development project at Christ University (MCA).
 
 ## Screenshots
 
-<!--
-  Drop screenshots into docs/screenshots/ using these exact filenames and this
-  section renders automatically. Suggested pages/states to capture:
-    - landing.png            → the marketing/landing page ("/")
-    - login.png              → the login page, Student tab selected ("/login")
-    - student-dashboard.png  → StudentDashboard signed in as a student with
-                                at least one course + one live/upcoming exam
-    - faculty-dashboard.png  → FacultyDashboard signed in as faculty with
-                                at least one course
-  Dark mode looks best for these. Use the seeded demo accounts below to get
-  real data in each screen instead of empty states.
--->
-
 | | |
 |---|---|
-| ![Landing page](docs/screenshots/landing.png) | ![Login page](docs/screenshots/login.png) |
-| ![Student dashboard](docs/screenshots/student-dashboard.png) | ![Faculty dashboard](docs/screenshots/faculty-dashboard.png) |
+| **Login** — role toggle, email/password or Google | **Student dashboard** — live exam banner, courses, results |
+| ![Login page](docs/screenshots/login.png) | ![Student dashboard](docs/screenshots/student-dashboard.png) |
+| **Faculty dashboard** — courses, quick actions | **Course detail (student view)** — announcements, exams, grades |
+| ![Faculty dashboard](docs/screenshots/faculty-dashboard.png) | ![Course detail student view](docs/screenshots/course-detail-student.png) |
+| **Course detail (faculty view)** — roster, exams, performance | **Grading center** — submissions, pending grading, CSV export |
+| ![Course detail faculty view](docs/screenshots/course-detail-faculty.webp) | ![Grading center](docs/screenshots/grading-center.png) |
+| **Grade session** — per-question review with correct vs. student answer | **Exam builder** — add questions from the question bank |
+| ![Grade session detail](docs/screenshots/grade-session.png) | ![Add questions to exam](docs/screenshots/add-questions-modal.png) |
 
 ---
 
