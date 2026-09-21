@@ -19,16 +19,17 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-# Vite reads these at build time
+# Vite reads this at build time
 ARG VITE_API_URL
-ARG VITE_WS_URL
 RUN npm run build     # outputs static files to /app/dist
 
 
 # ── Production Stage (nginx serves the built React app) ──────
 FROM nginx:alpine AS production
-# Copy custom nginx config (handles SPA routing — all paths → index.html)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# The nginx image renders /etc/nginx/templates/*.template with the container's
+# environment at startup, so the listen port follows $PORT (Railway sets it).
+ENV PORT=80
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 # Copy Vite build output
 COPY --from=builder /app/dist /usr/share/nginx/html
 EXPOSE 80

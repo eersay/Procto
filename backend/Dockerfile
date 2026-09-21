@@ -20,7 +20,7 @@ RUN npm install
 RUN npx prisma generate
 # Copy source — but volume mount will override this in docker-compose
 COPY . .
-EXPOSE 4000 4001
+EXPOSE 4000
 # ts-node-dev: recompiles + restarts on file change
 CMD ["sh", "-c", "npx prisma generate && npm run dev"]
 
@@ -37,9 +37,10 @@ RUN npm run build     # outputs to /app/dist
 FROM node:20-alpine AS production
 WORKDIR /app
 RUN apk add --no-cache openssl libc6-compat
-# Only production dependencies
+# Only production dependencies (the prisma CLI is a regular dependency so
+# `prisma migrate deploy` can run at startup)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 # Copy Prisma client and compiled code from builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -48,5 +49,7 @@ COPY prisma ./prisma
 # Run as non-root user for security
 RUN addgroup -S procto && adduser -S procto -G procto
 USER procto
-EXPOSE 4000 4001
-CMD ["node", "dist/server.js"]
+ENV CHECKPOINT_DISABLE=1 PRISMA_HIDE_UPDATE_MESSAGE=1
+EXPOSE 4000
+# Apply pending migrations, then start the API
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
