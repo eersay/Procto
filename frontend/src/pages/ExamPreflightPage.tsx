@@ -71,7 +71,12 @@ export default function ExamPreflightPage() {
   }, [examId]);
 
   useEffect(() => {
-    if (webcamStream && videoRef.current) videoRef.current.srcObject = webcamStream;
+    if (!webcamStream || !videoRef.current) return;
+    videoRef.current.srcObject = webcamStream;
+    videoRef.current.play().catch(() => {
+      // autoPlay may need a user gesture on some browsers; the element is
+      // already visible so a click anywhere on the page will resume it.
+    });
   }, [webcamStream]);
 
   useEffect(() => {

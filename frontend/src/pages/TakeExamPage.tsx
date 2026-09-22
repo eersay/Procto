@@ -246,11 +246,12 @@ export default function TakeExamPage() {
         audio: false
       });
 
+      // Don't assign srcObject here — the effect below is the single place
+      // that attaches the stream and calls play(). Assigning it here too
+      // made that effect's `srcObject !== webcamStream` check false by the
+      // time it ran, so play() silently never fired and the preview stayed
+      // black even though readyState/dimensions looked fine.
       setWebcamStream(stream);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
     } catch (error) {
       console.error('Webcam error:', error);
       toast.error('Webcam access required. Exam will be terminated.');
